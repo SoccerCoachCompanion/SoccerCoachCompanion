@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LineupMate — Soccer Lineup Builder</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F4D36">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LineupMate">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pitch:#1F4D36;
+    --pitch-deep:#173D2B;
+    --pitch-line: rgba(247,245,239,0.4);
+    --bg:#F5F2E8;
+    --card:#FFFFFF;
+    --ink:#16241B;
+    --ink-soft:#5B6B60;
+    --gold:#E3A038;
+    --gold-deep:#C6871F;
+    --coral:#D1583F;
+    --line:#E1DCC8;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body.drag-in-progress{touch-action:none; overscroll-behavior:none;}
+  .display{font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  .wrap{max-width:720px; margin:0 auto; padding:20px 16px 140px;}
+
+  header.top{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; padding-top:4px;}
+  .eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:var(--ink-soft); font-weight:600;}
+  h1.brand{font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:0.005em; font-size:36px; margin:2px 0 0; line-height:0.95;}
+  .format-pill{font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--ink); color:var(--bg); padding:6px 10px; border-radius:20px; font-weight:600; white-space:nowrap;}
+
+  nav.tabs{display:flex; gap:6px; margin-bottom:18px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px;}
+  nav.tabs button{
+    flex:1; border:none; background:transparent; padding:10px 8px; border-radius:9px;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13px; color:var(--ink-soft); cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  nav.tabs button.active{background:var(--ink); color:var(--bg);}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:16px;}
+  .card h2{font-family:'Bebas Neue'; font-size:22px; letter-spacing:0.02em; margin:0 0 4px;}
+  .card .sub{font-size:12.5px; color:var(--ink-soft); margin:0 0 14px;}
+
+  .row{display:flex; gap:10px; flex-wrap:wrap;}
+  .field{display:flex; flex-direction:column; gap:5px; flex:1; min-width:90px;}
+  .field label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft);}
+  input[type=text], input[type=number]{
+    border:1.5px solid var(--line); border-radius:9px; padding:9px 10px; font-size:14px; font-family:'Inter';
+    background:#FDFCF8; color:var(--ink); width:100%;
+  }
+  input:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold);}
+
+  .fmt-toggle{display:flex; gap:8px; margin-bottom:14px;}
+  .fmt-toggle button{
+    flex:1; padding:10px; border-radius:10px; border:1.5px solid var(--line); background:#FDFCF8;
+    font-weight:700; font-size:13px; cursor:pointer; color:var(--ink-soft);
+  }
+  .fmt-toggle button.active{border-color:var(--pitch); background:var(--pitch); color:#fff;}
+
+  .formation-toggle{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .formation-toggle button{
+    padding:8px 14px; border-radius:10px; border:1.5px solid var(--line); background:#FDFCF8;
+    font-weight:700; font-size:12.5px; cursor:pointer; color:var(--ink-soft); font-family:'IBM Plex Mono';
+  }
+  .formation-toggle button.active{border-color:var(--gold-deep); background:var(--gold); color:#fff;}
+  .formation-toggle .default-tag{font-family:'Inter',sans-serif; font-weight:600; font-size:9.5px; opacity:0.75; text-transform:uppercase; letter-spacing:0.03em;}
+
+  .formation-display{display:flex; flex-direction:column; gap:8px; margin-bottom:4px;}
+  .formation-line{display:flex; align-items:center; gap:8px;}
+  .formation-line .lbl{font-size:11px; font-weight:700; color:var(--ink-soft); width:34px; flex-shrink:0; text-transform:uppercase; letter-spacing:0.06em;}
+  .slot-badge{
+    font-family:'IBM Plex Mono'; font-weight:700; font-size:12px; background:var(--pitch); color:#fff;
+    padding:5px 10px; border-radius:7px;
+  }
+  .slot-badge.gk{background:var(--gold);}
+  .formation-total{font-size:12px; color:var(--ink-soft); margin-top:8px;}
+  .formation-total.warn{color:var(--coral); font-weight:700;}
+
+  .roster-list{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
+  .player-row{
+    display:flex; flex-direction:column; gap:8px; border:1.5px solid var(--line); border-radius:11px; padding:8px 10px; background:#FDFCF8;
+  }
+  .player-top{display:flex; align-items:center; gap:8px;}
+  .jersey{
+    width:34px; height:34px; border-radius:50%; background:var(--pitch); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono'; font-weight:700; font-size:13px; flex-shrink:0;
+  }
+  input.jersey-input{
+    width:34px; height:34px; flex-shrink:0; border-radius:50%; background:var(--pitch); color:#fff;
+    font-family:'IBM Plex Mono'; font-weight:700; font-size:13px; text-align:center; border:none; padding:0;
+  }
+  input.jersey-input::-webkit-outer-spin-button, input.jersey-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  input.jersey-input{-moz-appearance:textfield;}
+  input.rating-input{
+    width:52px; flex-shrink:0; border-radius:8px; border:1.5px solid var(--gold); background:#fff; color:var(--ink);
+    font-family:'IBM Plex Mono'; font-weight:700; font-size:13px; text-align:center; padding:6px 2px;
+  }
+  .roster-header{display:flex; align-items:center; gap:8px; padding:0 10px; margin-top:10px;}
+  .roster-header span{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft);}
+  .roster-header .rh-num{width:34px; flex-shrink:0; text-align:center;}
+  .roster-header .rh-name{flex:1;}
+  .roster-header .rh-rating{width:52px; flex-shrink:0; text-align:center;}
+  .roster-header .rh-spacer{width:26px; flex-shrink:0;}
+  .player-row input[type=text]{flex:1; min-width:0; border:none; background:transparent; padding:4px 2px; font-weight:600;}
+  .pos-chips{display:flex; gap:5px; flex-shrink:0; flex-wrap:wrap; padding-left:42px;}
+  .chip{
+    min-width:28px; height:26px; padding:0 5px; border-radius:7px; border:1.5px solid var(--line); background:#fff; font-size:10px; font-weight:800;
+    color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono';
+  }
+  .chip.on{background:var(--gold); border-color:var(--gold-deep); color:#fff;}
+  .chip.gk.on{background:var(--pitch); border-color:var(--pitch-deep); color:#fff;}
+  .chip.center.on{background:var(--coral); border-color:#a3402c; color:#fff;}
+  .remove-btn{border:none; background:transparent; color:var(--ink-soft); cursor:pointer; font-size:17px; padding:2px 4px; flex-shrink:0;}
+  .remove-btn:hover{color:var(--coral);}
+  .out-toggle{
+    border:1.5px solid var(--line); background:#fff; color:var(--ink-soft); font-family:'Inter',sans-serif; font-weight:700; font-size:10px;
+    padding:0 9px; height:26px; border-radius:8px; cursor:pointer; flex-shrink:0; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap;
+  }
+  .out-toggle.on{background:var(--coral); border-color:#a3402c; color:#fff;}
+  .player-row.is-out{opacity:0.6; background:#EFEBDD;}
+  .out-note{font-size:11px; color:var(--coral); font-weight:600; padding-left:42px;}
+  .out-divider{
+    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft);
+    margin:14px 0 2px; padding-top:12px; border-top:1.5px dashed var(--line);
+  }
+
+  .add-player-row{display:flex; gap:8px; margin-top:12px;}
+  .add-player-row input{flex:1;}
+
+  button.btn{
+    border:none; border-radius:11px; padding:12px 16px; font-weight:700; font-size:14px; cursor:pointer;
+    font-family:'Inter'; transition:transform .1s, opacity .1s;
+  }
+  button.btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--pitch); color:#fff; width:100%;}
+  .btn-primary:disabled{opacity:0.4; cursor:not-allowed;}
+
+  .checkbox-row{display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color:var(--ink-soft); font-weight:600; cursor:pointer;}
+  .checkbox-row input{width:17px; height:17px; accent-color:var(--pitch); flex-shrink:0; cursor:pointer;}
+  .btn-gold{background:var(--gold); color:#fff;}
+  .btn-ghost{background:transparent; color:var(--ink-soft); border:1.5px solid var(--line);}
+  .btn-small{padding:8px 12px; font-size:12.5px;}
+
+  .alert{
+    background:#FBEAE5; border:1.5px solid var(--coral); color:#8A3223; border-radius:10px; padding:10px 12px; font-size:12.5px; margin-bottom:14px; font-weight:600;
+  }
+  .empty-state{text-align:center; padding:30px 10px; color:var(--ink-soft);}
+  .empty-state .display{font-size:26px; color:var(--ink); margin-bottom:6px;}
+
+  /* Game day */
+  .period-tabs{display:flex; gap:6px; overflow-x:auto; margin-bottom:14px; padding-bottom:2px;}
+  .period-tabs button{
+    flex-shrink:0; border:1.5px solid var(--line); background:var(--card); padding:8px 14px; border-radius:20px;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:13px; color:var(--ink-soft); cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .period-tabs button.active{background:var(--pitch); border-color:var(--pitch-deep); color:#fff;}
+  .tab-x{font-family:'Inter',sans-serif; font-size:11px; opacity:0.6;}
+  .tab-x:hover{opacity:1;}
+
+  .save-btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .custom-save-row{display:flex; gap:8px; margin-top:10px;}
+  .custom-save-row input{flex:1;}
+
+  .pitch-card{background:linear-gradient(180deg, var(--pitch) 0%, var(--pitch-deep) 100%); border-radius:var(--radius); padding:10px; margin-bottom:14px; position:relative; overflow:hidden;}
+  .pitch-svg-wrap{position:relative; width:100%;}
+  .pitch-svg-wrap svg{position:absolute; inset:0; display:block; width:100%; height:100%;}
+  .token-hotspots{position:absolute; inset:0;}
+  .token-hotspot{position:absolute; transform:translate(-50%,-50%); border-radius:16px;}
+
+  .bench-strip{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 8px; touch-action:pan-x;}
+  .bench-chip{
+    flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:3px; background:#EFEBDD; border:1.5px solid var(--line);
+    border-radius:11px; padding:8px 10px; min-width:56px;
+  }
+  .bench-chip .jersey{background:#B9B29A; width:28px; height:28px; font-size:11px;}
+  .bench-chip .name{font-size:10px; font-weight:700; color:var(--ink-soft); text-align:center; max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  .balance-row{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
+  .balance-row .name{width:78px; flex-shrink:0; font-size:12px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .balance-bar-track{flex:1; height:16px; background:#EFEBDD; border-radius:8px; overflow:hidden; position:relative;}
+  .balance-bar-fill{height:100%; background:var(--gold); border-radius:8px; transition:width .4s ease;}
+  .balance-bar-fill.gk-mix{background:linear-gradient(90deg, var(--pitch) 0%, var(--pitch) var(--gkpct,0%), var(--gold) var(--gkpct,0%));}
+  .balance-min{width:54px; flex-shrink:0; font-size:11px; font-family:'IBM Plex Mono'; color:var(--ink-soft); text-align:right;}
+
+  .section-label{font-size:11px; text-transform:uppercase; letter-spacing:0.1em; font-weight:700; color:var(--ink-soft); margin:0 0 10px;}
+
+  footer.note{text-align:center; font-size:11px; color:var(--ink-soft); margin-top:24px; line-height:1.6;}
+  footer.note a{color:var(--pitch); font-weight:700; text-decoration:underline; text-underline-offset:2px;}
+  footer.note a:hover{color:var(--pitch-deep);}
+
+  .save-bar{position:fixed; left:0; bottom:0; width:100%; background:var(--card); border-top:1.5px solid var(--line); padding:10px 0; z-index:50; box-shadow:0 -2px 10px rgba(0,0,0,0.06);}
+  .save-bar-inner{max-width:720px; margin:0 auto; padding:0 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .save-status{font-size:11.5px; color:var(--ink-soft); flex:1; text-align:right; min-width:120px;}
+
+  .bottom-sheet-backdrop{position:fixed; inset:0; background:rgba(22,36,27,0.4); z-index:90; display:none;}
+  .bottom-sheet{
+    position:fixed; left:0; right:0; bottom:0; max-width:720px; margin:0 auto; background:var(--bg);
+    border-radius:20px 20px 0 0; z-index:100; transform:translateY(105%); transition:transform .28s ease;
+    max-height:75vh; overflow-y:auto; padding:14px 18px 26px; box-shadow:0 -8px 24px rgba(0,0,0,0.18);
+  }
+  .bottom-sheet.open{transform:translateY(0);}
+  .sheet-handle{width:40px; height:4px; background:var(--line); border-radius:2px; margin:0 auto 14px;}
+  .sheet-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;}
+  .sheet-header h3{font-size:24px; margin:0;}
+  .sheet-close{border:none; background:var(--card); border:1.5px solid var(--line); width:30px; height:30px; border-radius:50%; font-size:14px; color:var(--ink-soft); cursor:pointer;}
+  .sheet-sub{font-size:12.5px; color:var(--ink-soft); margin:0 0 14px;}
+  .sheet-input-row{display:flex; gap:8px; margin-bottom:16px;}
+  .sheet-input-row input{flex:1;}
+  .sheet-empty{font-size:13px; color:var(--ink-soft); text-align:center; padding:20px 0;}
+
+  .save-tile{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:2px solid var(--ink); border-radius:16px; padding:14px 18px; margin-bottom:10px; cursor:pointer;
+    background:#fff; transition:background .1s;
+  }
+  .save-tile:active{background:#EFEBDD;}
+  .save-tile .save-tile-name{font-family:'Inter',sans-serif; font-size:15px; font-weight:600; color:var(--ink);}
+  .save-tile .save-tile-x{font-size:17px; color:var(--ink-soft); padding:2px 8px; cursor:pointer; flex-shrink:0;}
+  .save-tile .save-tile-x:hover{color:var(--coral);}
+
+  [data-player-id]{cursor:grab; touch-action:none;}
+  .token-dragging{opacity:0.25;}
+  .drag-clone{
+    position:fixed; pointer-events:none; z-index:1000; width:44px; height:44px; border-radius:50%;
+    background:var(--gold); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono'; font-weight:700; font-size:15px; transform:translate(-50%,-50%);
+    box-shadow:0 6px 16px rgba(0,0,0,0.35); border:2.5px solid #fff;
+  }
+  .drag-hint{text-align:center; font-size:11px; color:var(--ink-soft); margin:-8px 0 14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="eyebrow">Soccer Lineup Builder</div>
+      <h1 class="brand">Rec Lineup Builder</h1>
+    </div>
+    <div class="format-pill" id="formatPill">7v7</div>
+  </header>
+
+  <nav class="tabs">
+    <button id="tabSetupBtn" class="active">Roster &amp; Settings</button>
+    <button id="tabGameBtn">Game Day</button>
+  </nav>
+
+  <!-- SETUP TAB -->
+  <div id="tabSetup">
+
+    <div class="card">
+      <h2>Format</h2>
+      <div class="fmt-toggle">
+        <button data-fmt="7v7" class="active">7v7</button>
+        <button data-fmt="9v9">9v9</button>
+        <button data-fmt="11v11">11v11</button>
+      </div>
+
+      <div class="formation-toggle" id="formationToggle"></div>
+
+      <div class="formation-display" id="formationDisplay"></div>
+      <div class="formation-total" id="formationTotal"></div>
+    </div>
+
+    <div class="card">
+      <h2>Game clock</h2>
+      <p class="sub">Used to split minutes evenly across the roster.</p>
+      <div class="row">
+        <div class="field"><label>Periods</label><input type="number" min="1" max="8" id="numPeriods"></div>
+        <div class="field"><label>Minutes / period</label><input type="number" min="1" max="60" id="periodLength"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Roster</h2>
+      <p class="sub">Tap the chips to mark who's eligible where. <strong>CD</strong>/<strong>CM</strong> (center) and <strong>OD</strong>/<strong>OM</strong> (outside — covers LD/RD or LM/RM) are separate, since wide and central players are often different skill sets. <strong>F</strong> covers all forward slots. GK is off by default.</p>
+      <label class="checkbox-row" style="margin-top:0; margin-bottom:14px;">
+        <input type="checkbox" id="ratingsEnabledInput">
+        <span>Enable Skill Ratings</span>
+      </label>
+      <div id="rosterAlert"></div>
+      <div class="roster-header" id="rosterHeader" style="display:none;">
+        <span class="rh-num">#</span><span class="rh-name">Name</span><span class="rh-rating" id="rhRating">Rating</span><span class="rh-spacer"></span>
+      </div>
+      <div class="roster-list" id="rosterList"></div>
+      <div class="add-player-row">
+        <input type="text" id="newPlayerName" placeholder="Player name">
+        <button class="btn btn-gold btn-small" id="addPlayerBtn">+ Add</button>
+      </div>
+    </div>
+
+    <footer class="note">
+      <a href="mailto:mightychicken93@yahoo.com" target="_system" rel="noopener" id="contactLink">Contact (Report a Bug, Request a Feature)</a><br>
+      <span id="contactEmailText" style="user-select:all;">mightychicken93@yahoo.com</span>
+      <button id="copyEmailBtn" type="button" style="border:none; background:transparent; color:var(--pitch); font-weight:700; text-decoration:underline; font-size:11px; cursor:pointer; padding:0; margin-left:4px;">Copy</button>
+      <div style="margin-top:10px;">
+        <a href="https://ko-fi.com/reclineupbuilder" target="_blank" rel="noopener" id="donateLink" class="btn btn-gold btn-small" style="display:inline-block; text-decoration:none;">☕ Buy me a coffee</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- GAME DAY TAB -->
+  <div id="tabGame" style="display:none;">
+
+    <div class="card" style="padding-bottom:14px;">
+      <button class="btn btn-primary" id="randomizeBtn">🔀 Create a Lineup</button>
+      <label class="checkbox-row">
+        <input type="checkbox" id="avoidRepeatGkInput">
+        <span>Avoid repeat GK (Q1–Q4, when possible)</span>
+      </label>
+    </div>
+
+    <div id="gameContent"></div>
+
+    <footer class="note">Randomizing balances total minutes, goalkeeper time, and specific position slots across the whole roster.</footer>
+  </div>
+
+</div>
+
+<div class="save-bar">
+  <div class="save-bar-inner">
+    <button class="btn btn-primary btn-small" id="manualSaveBtn">💾 Save</button>
+    <button class="btn btn-ghost btn-small" id="manualLoadBtn">📂 Load</button>
+    <button class="btn btn-ghost btn-small" id="exportRosterBtn" title="Export roster to a file">⬆️ Export</button>
+    <button class="btn btn-ghost btn-small" id="importRosterBtn" title="Import roster from a file">⬇️ Import</button>
+    <input type="file" id="importRosterFileInput" accept="application/json" style="display:none;">
+    <span class="save-status" id="saveStatus"></span>
+  </div>
+</div>
+
+<div class="bottom-sheet-backdrop" id="sheetBackdrop"></div>
+<div class="bottom-sheet" id="bottomSheet">
+  <div class="sheet-handle"></div>
+  <div id="sheetContent"></div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'lineup-app-state-v3';
+
+  // Which eligibility chip(s) a given pitch slot draws from, in priority order.
+  // A slot first looks for a specialist, then falls back to the adjacent chip, then anyone.
+  const SLOT_ELIG_CHAIN = {
+    CD: ['CD','OD'], LCD: ['CD','OD'], RCD: ['CD','OD'], LD: ['OD','CD'], RD: ['OD','CD'],
+    CM: ['CM','OM'], LCM: ['CM','OM'], RCM: ['CM','OM'], LM: ['OM','CM'], RM: ['OM','CM'],
+    ST: ['FWD'], LF: ['FWD'], RF: ['FWD'], CF: ['FWD']
+  };
+
+  // Each format offers a few named formations (DEF-MID-FWD notation). Slots within a group
+  // are ordered left-to-right for pitch placement. The first formation listed for a format
+  // is its default.
+  const FORMATIONS = {
+    '7v7': {
+      '2-3-1': { DEF:['LD','RD'],          MID:['LM','CM','RM'], FWD:['ST'] },
+      '3-2-1': { DEF:['LD','CD','RD'],     MID:['LM','RM'],      FWD:['ST'] }
+    },
+    '9v9': {
+      '3-3-2': { DEF:['LD','CD','RD'],     MID:['LM','CM','RM'], FWD:['LF','RF'] },
+      '3-2-3': { DEF:['LD','CD','RD'],     MID:['LM','RM'],      FWD:['LF','CF','RF'] }
+    },
+    '11v11': {
+      '4-3-3': { DEF:['LD','LCD','RCD','RD'], MID:['LM','CM','RM'],       FWD:['LF','CF','RF'] },
+      '4-4-2': { DEF:['LD','LCD','RCD','RD'], MID:['LM','LCM','RCM','RM'], FWD:['LF','RF'] },
+      '3-4-3': { DEF:['LD','CD','RD'],        MID:['LM','LCM','RCM','RM'], FWD:['LF','CF','RF'] }
+    }
+  };
+  function defaultFormationFor(fmt){ return Object.keys(FORMATIONS[fmt])[0]; }
+  const GROUP_ORDER = ['DEF','MID','FWD'];
+
+  // ---------- persistence ----------
+  // Three layers, tried in order:
+  //  1. App Inventor bridge — when this page runs inside MIT App Inventor's WebViewer,
+  //     localStorage doesn't reliably persist (a known WebViewer limitation for local/bundled
+  //     HTML). So instead we hand key/value reads and writes off to Blocks over the
+  //     WebViewString channel, backed by a TinyDB component on the App Inventor side.
+  //  2. window.storage — works inside the Claude.ai viewer.
+  //  3. localStorage — works when this file is downloaded and opened directly in a desktop browser.
+  //
+  //  1. Autosave — the current session (roster, settings, whatever's on screen) saves itself
+  //     silently as you work, so nothing is lost if the tab closes.
+  //  2. Named saves — explicit snapshots ("Team 1", etc.) the user creates via Save/Load,
+  //     shown as tiles in an in-page sheet instead of an OS file dialog.
+  const SAVES_INDEX_KEY = 'lineup-saves-index';
+  const SAVE_DATA_PREFIX = 'lineup-save-data-';
+
+  // --- App Inventor bridge ---
+  // Protocol on the single shared WebViewString channel: JS sends "REQ~|~<SET|GET>~|~<reqId>~|~<key>~|~<value>".
+  // Blocks (via a Clock timer) reads it, performs the TinyDB operation, then overwrites
+  // WebViewString with "RESP~|~<reqId>~|~<value>". JS polls getWebViewString() for that
+  // exact reqId. Requests are queued one at a time so rapid saves don't clobber each other
+  // on the shared channel.
+  const AI_DELIM = '~|~';
+  let aiReqCounter = 0;
+  let aiQueue = Promise.resolve();
+
+  function hasAIBridge(){
+    return !!(window.AppInventor && typeof window.AppInventor.setWebViewString==='function' && typeof window.AppInventor.getWebViewString==='function');
+  }
+  function aiRequestRaw(type, key, value){
+    return new Promise((resolve)=>{
+      const reqId = 'r' + (++aiReqCounter);
+      const req = ['REQ', type, reqId, key, value==null?'':value].join(AI_DELIM);
+      window.AppInventor.setWebViewString(req);
+      const startedAt = Date.now();
+      const poll = setInterval(()=>{
+        let resp = '';
+        try{ resp = window.AppInventor.getWebViewString() || ''; }catch(e){ /* ignore */ }
+        const prefix = 'RESP'+AI_DELIM+reqId+AI_DELIM;
+        if(resp.indexOf(prefix)===0){
+          clearInterval(poll);
+          resolve(resp.slice(prefix.length));
+        } else if(Date.now()-startedAt > 6000){
+          clearInterval(poll);
+          resolve(null); // timed out — Blocks side may not be wired up yet
+        }
+      }, 150);
+    });
+  }
+  function aiRequest(type, key, value){
+    const result = aiQueue.then(()=>aiRequestRaw(type,key,value), ()=>aiRequestRaw(type,key,value));
+    aiQueue = result.catch(()=>{});
+    return result;
+  }
+
+  function hasAppStorage(){
+    return typeof window.storage !== 'undefined' && window.storage && typeof window.storage.set === 'function';
+  }
+  async function storageSet(key, value){
+    if(hasAIBridge()){
+      const res = await aiRequest('SET', key, value);
+      if(res!=null) return true;
+    }
+    if(hasAppStorage()){
+      try{
+        const res = await window.storage.set(key, value, false);
+        if(res) return true;
+      }catch(e){ /* fall through to localStorage */ }
+    }
+    try{ localStorage.setItem(key, value); return true; }catch(e){ return false; }
+  }
+  async function storageGet(key){
+    if(hasAIBridge()){
+      const res = await aiRequest('GET', key, '');
+      if(res!=null) return res==='' ? null : res;
+    }
+    if(hasAppStorage()){
+      try{
+        const res = await window.storage.get(key, false);
+        if(res && res.value!=null) return res.value;
+      }catch(e){ /* fall through to localStorage */ }
+    }
+    try{ const v = localStorage.getItem(key); if(v!=null) return v; }catch(e){ /* ignore */ }
+    return null;
+  }
+  async function storageDelete(key){
+    if(hasAIBridge()){
+      await aiRequest('SET', key, '');
+      return;
+    }
+    if(hasAppStorage()){
+      try{ await window.storage.delete(key, false); }catch(e){ /* ignore */ }
+    }
+    try{ localStorage.removeItem(key); }catch(e){ /* ignore */ }
+  }
+
+  function defaultState(){
+    return {
+      format:'7v7', formation: defaultFormationFor('7v7'), numPeriods:4, periodLength:12,
+      roster:[], workingLineup:null, savedLineups:[], activeView:null, avoidRepeatGK:false,
+      ratingsEnabled:false
+    };
+  }
+
+  async function save(){
+    await storageSet(STORAGE_KEY, JSON.stringify(state));
+  }
+  async function load(){
+    const raw = await storageGet(STORAGE_KEY);
+    if(raw){
+      try{ state = Object.assign(state, JSON.parse(raw)); }catch(e){ /* ignore corrupt data */ }
+    }
+    migrateOldLineups();
+  }
+
+  async function loadSavesIndex(){
+    const raw = await storageGet(SAVES_INDEX_KEY);
+    try{ return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+  }
+  async function writeSavesIndex(list){
+    await storageSet(SAVES_INDEX_KEY, JSON.stringify(list));
+  }
+
+  // Creates a new named save, or overwrites one if `id` is given (or a save with the same name exists).
+  async function createOrOverwriteSave(name, id){
+    name = (name||'').trim();
+    if(!name) return false;
+    const list = await loadSavesIndex();
+    let entry = id ? list.find(e=>e.id===id) : list.find(e=>e.name.toLowerCase()===name.toLowerCase());
+    if(!entry){
+      entry = {id: uid(), name, savedAt: Date.now()};
+      list.push(entry);
+    } else {
+      entry.name = name;
+      entry.savedAt = Date.now();
+    }
+    const dataOk = await storageSet(SAVE_DATA_PREFIX+entry.id, JSON.stringify(state));
+    if(!dataOk) return false;
+    await writeSavesIndex(list);
+    return true;
+  }
+
+  async function loadSaveById(id){
+    const raw = await storageGet(SAVE_DATA_PREFIX+id);
+    if(!raw) return false;
+    try{
+      state = Object.assign(defaultState(), JSON.parse(raw));
+      migrateOldLineups();
+      renderAll();
+      showTab('setup');
+      save(); // mirror into the autosave slot too
+      return true;
+    }catch(e){ return false; }
+  }
+
+  async function deleteSaveById(id){
+    const list = await loadSavesIndex();
+    await writeSavesIndex(list.filter(e=>e.id!==id));
+    await storageDelete(SAVE_DATA_PREFIX+id);
+  }
+
+  function flashStatus(msg){
+    document.getElementById('saveStatus').textContent = msg;
+  }
+
+  // ---------- bottom sheet (Save / Load) ----------
+  function saveTileHtml(entry){
+    const safeName = escapeHtml(entry.name);
+    return `<div class="save-tile" data-id="${entry.id}" data-name="${safeName}">
+      <span class="save-tile-name">${safeName}.sav</span>
+      <span class="save-tile-x" data-id="${entry.id}" data-name="${safeName}" title="Delete">✕</span>
+    </div>`;
+  }
+  function showSheet(){
+    document.getElementById('bottomSheet').classList.add('open');
+    document.getElementById('sheetBackdrop').style.display = 'block';
+  }
+  function closeSheet(){
+    document.getElementById('bottomSheet').classList.remove('open');
+    document.getElementById('sheetBackdrop').style.display = 'none';
+  }
+
+  async function openSaveSheet(){
+    const list = await loadSavesIndex();
+    const sheetContent = document.getElementById('sheetContent');
+    sheetContent.innerHTML = `
+      <div class="sheet-header"><h3 class="display">Save Lineup</h3><button class="sheet-close" id="sheetCloseBtn">✕</button></div>
+      <p class="sheet-sub">Name this save, or tap an existing one below to overwrite it.</p>
+      <div class="sheet-input-row">
+        <input type="text" id="saveNameInput" placeholder="e.g. Team 1">
+        <button class="btn btn-gold btn-small" id="confirmSaveBtn">Save</button>
+      </div>
+      <div id="saveTileList">
+        ${list.length===0 ? '<div class="sheet-empty">No saved lineups yet.</div>' : list.map(saveTileHtml).join('')}
+      </div>
+    `;
+    showSheet();
+    document.getElementById('sheetCloseBtn').onclick = closeSheet;
+    document.getElementById('confirmSaveBtn').onclick = async ()=>{
+      const name = document.getElementById('saveNameInput').value;
+      if(!name.trim()){ flashStatus('Enter a name to save.'); return; }
+      const ok = await createOrOverwriteSave(name);
+      closeSheet();
+      flashStatus(ok ? 'Saved ✓' : 'Could not save on this device.');
+    };
+    document.getElementById('saveNameInput').addEventListener('keydown', e=>{
+      if(e.key==='Enter') document.getElementById('confirmSaveBtn').click();
+    });
+    wireTileList(sheetContent, 'save');
+  }
+
+  async function openLoadSheet(){
+    const list = await loadSavesIndex();
+    const sheetContent = document.getElementById('sheetContent');
+    sheetContent.innerHTML = `
+      <div class="sheet-header"><h3 class="display">Load Lineup</h3><button class="sheet-close" id="sheetCloseBtn">✕</button></div>
+      <p class="sheet-sub">Tap a save to load it — this replaces what's currently open.</p>
+      <div id="saveTileList">
+        ${list.length===0 ? '<div class="sheet-empty">No saved lineups yet — use Save to create one.</div>' : list.map(saveTileHtml).join('')}
+      </div>
+    `;
+    showSheet();
+    document.getElementById('sheetCloseBtn').onclick = closeSheet;
+    wireTileList(sheetContent, 'load');
+  }
+
+  function wireTileList(sheetContent, mode){
+    sheetContent.querySelectorAll('.save-tile').forEach(tile=>{
+      tile.onclick = async (e)=>{
+        if(e.target.classList.contains('save-tile-x')) return;
+        const id = tile.dataset.id, name = tile.dataset.name;
+        if(mode==='save'){
+          if(!confirm(`Overwrite "${name}" with the current lineup?`)) return;
+          const ok = await createOrOverwriteSave(name, id);
+          closeSheet();
+          flashStatus(ok ? 'Saved ✓' : 'Could not save on this device.');
+        } else {
+          if(!confirm(`Load "${name}"? This replaces your current roster and lineups.`)) return;
+          const ok = await loadSaveById(id);
+          closeSheet();
+          flashStatus(ok ? 'Loaded ✓' : 'Could not load that save.');
+        }
+      };
+    });
+    sheetContent.querySelectorAll('.save-tile-x').forEach(x=>{
+      x.onclick = async (e)=>{
+        e.stopPropagation();
+        const id = x.dataset.id, name = x.dataset.name;
+        if(!confirm(`Delete "${name}"? This can't be undone.`)) return;
+        await deleteSaveById(id);
+        if(mode==='save') openSaveSheet(); else openLoadSheet();
+      };
+    });
+  }
+
+  let state = defaultState();
+
+  // Older versions of this app generated a fixed array of period lineups (state.lineups / state.activePeriod).
+  // If we find that shape and haven't migrated yet, carry it over as saved Q1/Q2/... lineups.
+  function migrateOldLineups(){
+    if((!state.savedLineups || state.savedLineups.length===0) && Array.isArray(state.lineups) && state.lineups.length>0){
+      state.savedLineups = state.lineups.map(l=>({
+        id: uid(), label: `Q${l.period+1}`, slots: l.slots, bench: l.bench
+      }));
+    }
+    if(!state.savedLineups) state.savedLineups = [];
+    if(state.workingLineup===undefined) state.workingLineup = null;
+    delete state.lineups;
+    delete state.activePeriod;
+    if(!state.activeView){
+      state.activeView = state.savedLineups.length>0 ? state.savedLineups[0].id : null;
+    }
+    if(!FORMATIONS[state.format]) state.format = '7v7';
+    if(!state.formation || !FORMATIONS[state.format][state.formation]){
+      state.formation = defaultFormationFor(state.format);
+    }
+  }
+
+  // ---------- helpers ----------
+  function uid(){ return 'p' + Math.random().toString(36).slice(2,9); }
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+  function positions(){
+    const formats = FORMATIONS[state.format] || FORMATIONS['7v7'];
+    return formats[state.formation] || formats[defaultFormationFor(state.format)];
+  }
+  function allSlots(){
+    const pos = positions();
+    return ['GK', ...pos.DEF, ...pos.MID, ...pos.FWD];
+  }
+  function fieldSize(){ return allSlots().length; }
+  function groupOfSlot(slot){
+    if(slot==='GK') return 'GK';
+    const pos = positions();
+    if(pos.DEF.includes(slot)) return 'DEF';
+    if(pos.MID.includes(slot)) return 'MID';
+    return 'FWD';
+  }
+
+  // ---------- rendering: tabs ----------
+  const tabSetupBtn = document.getElementById('tabSetupBtn');
+  const tabGameBtn = document.getElementById('tabGameBtn');
+  const tabSetup = document.getElementById('tabSetup');
+  const tabGame = document.getElementById('tabGame');
+
+  function showTab(tab){
+    if(tab==='setup'){
+      tabSetup.style.display='block'; tabGame.style.display='none';
+      tabSetupBtn.classList.add('active'); tabGameBtn.classList.remove('active');
+    }else{
+      tabSetup.style.display='none'; tabGame.style.display='block';
+      tabGameBtn.classList.add('active'); tabSetupBtn.classList.remove('active');
+      renderGame();
+    }
+  }
+  tabSetupBtn.onclick = ()=>showTab('setup');
+  tabGameBtn.onclick = ()=>showTab('game');
+
+  // ---------- format / formation ----------
+  const fmtBtns = document.querySelectorAll('.fmt-toggle button');
+  fmtBtns.forEach(b=>{
+    b.onclick = ()=>{
+      state.format = b.dataset.fmt;
+      state.formation = defaultFormationFor(state.format);
+      renderAll(); save();
+    };
+  });
+
+  function renderFormationToggle(){
+    const el = document.getElementById('formationToggle');
+    const options = Object.keys(FORMATIONS[state.format]);
+    el.innerHTML = options.map(key=>{
+      const isDefault = key===defaultFormationFor(state.format);
+      const tag = isDefault ? ' <span class="default-tag">Default</span>' : '';
+      return `<button data-formation="${key}" class="${state.formation===key?'active':''}">${key}${tag}</button>`;
+    }).join('');
+    el.querySelectorAll('button').forEach(b=>{
+      b.onclick = ()=>{
+        state.formation = b.dataset.formation;
+        renderAll(); save();
+      };
+    });
+  }
+
+  function renderFormationDisplay(){
+    const pos = positions();
+    const el = document.getElementById('formationDisplay');
+    function line(label, slots, isGk){
+      const badges = slots.map(s=>`<div class="slot-badge ${isGk?'gk':''}">${s}</div>`).join('');
+      return `<div class="formation-line"><div class="lbl">${label}</div>${badges}</div>`;
+    }
+    el.innerHTML =
+      line('GK', ['GK'], true) +
+      line('Def', pos.DEF, false) +
+      line('Mid', pos.MID, false) +
+      line('Fwd', pos.FWD, false);
+  }
+
+  function renderFormationTotal(){
+    const total = fieldSize();
+    const el = document.getElementById('formationTotal');
+    const activeCount = state.roster.filter(p=>!p.out).length;
+    el.textContent = `${total} on the field (incl. GK)`;
+    el.classList.toggle('warn', state.roster.length>0 && activeCount < total);
+  }
+  function renderFormatPill(){
+    document.getElementById('formatPill').textContent = state.format + ' · ' + state.formation;
+  }
+
+  // ---------- game clock ----------
+  const numPeriodsInput = document.getElementById('numPeriods');
+  const periodLengthInput = document.getElementById('periodLength');
+  numPeriodsInput.oninput = ()=>{ state.numPeriods = Math.max(1, parseInt(numPeriodsInput.value)||1); save(); };
+  periodLengthInput.oninput = ()=>{ state.periodLength = Math.max(1, parseInt(periodLengthInput.value)||1); save(); };
+
+  // ---------- roster ----------
+  const rosterList = document.getElementById('rosterList');
+  const newPlayerName = document.getElementById('newPlayerName');
+  document.getElementById('addPlayerBtn').onclick = addPlayer;
+  newPlayerName.addEventListener('keydown', e=>{ if(e.key==='Enter') addPlayer(); });
+
+  document.getElementById('exportRosterBtn').onclick = exportRoster;
+  document.getElementById('importRosterBtn').onclick = openImportSheet;
+  document.getElementById('importRosterFileInput').onchange = (e)=>{
+    const file = e.target.files[0];
+    if(file) importRosterFile(file);
+    e.target.value = '';
+  };
+
+  function openImportSheet(){
+    const sheetContent = document.getElementById('sheetContent');
+    sheetContent.innerHTML = `
+      <div class="sheet-header"><h3 class="display">Import Roster</h3><button class="sheet-close" id="sheetCloseBtn">✕</button></div>
+      <p class="sheet-sub">Choose a roster-export file, or paste its contents below. Pasting works everywhere, including inside the APK, where a file picker may not.</p>
+      <button class="btn btn-ghost btn-small" id="chooseImportFileBtn">Choose file…</button>
+      <textarea id="importPasteArea" placeholder="Paste exported roster JSON here" style="width:100%; min-height:110px; margin-top:12px; border:1.5px solid var(--line); border-radius:9px; padding:9px 10px; font-family:'IBM Plex Mono'; font-size:12px; background:#FDFCF8; color:var(--ink);"></textarea>
+      <button class="btn btn-gold btn-small" id="confirmPasteImportBtn" style="margin-top:10px;">Import pasted text</button>
+    `;
+    showSheet();
+    document.getElementById('sheetCloseBtn').onclick = closeSheet;
+    document.getElementById('chooseImportFileBtn').onclick = ()=> document.getElementById('importRosterFileInput').click();
+    document.getElementById('confirmPasteImportBtn').onclick = ()=>{
+      const text = document.getElementById('importPasteArea').value;
+      if(!text.trim()){ flashStatus('Paste roster JSON first.'); return; }
+      applyImportedRosterJson(text);
+      closeSheet();
+    };
+  }
+
+  function exportRoster(){
+    const payload = {type:'lineup-roster-export', version:1, exportedAt:Date.now(), roster: state.roster};
+    const json = JSON.stringify(payload, null, 2);
+    if(hasAIBridge()){
+      // A plain browser download doesn't work in App Inventor's WebViewer (no download
+      // handler wired up). Hand the JSON to Blocks instead — it should write it with a
+      // File component and offer it through Sharing.ShareFile so the user can save/send it.
+      aiRequest('EXPORT', 'roster', json).then(res=>{
+        flashStatus(res!=null ? 'Roster sent to Share ✓' : 'Export bridge not set up in the app yet.');
+      });
+      return;
+    }
+    const blob = new Blob([json], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'roster-export.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    flashStatus('Roster exported ✓');
+  }
+
+  function applyImportedRosterJson(text){
+    try{
+      const parsed = JSON.parse(text);
+      const incoming = Array.isArray(parsed) ? parsed : parsed.roster;
+      if(!Array.isArray(incoming)) throw new Error('no roster array in file');
+      const cleaned = incoming.map(p=>({
+        id: uid(),
+        name: typeof p.name==='string' && p.name.trim() ? p.name.trim() : 'Player',
+        number: Number.isFinite(p.number) ? p.number : 0,
+        rating: clampRating(p.rating),
+        out: !!p.out,
+        elig: {
+          GK: !!(p.elig && p.elig.GK),
+          CD: !!(p.elig && p.elig.CD),
+          OD: p.elig && p.elig.OD!==undefined ? !!p.elig.OD : true,
+          CM: !!(p.elig && p.elig.CM),
+          OM: p.elig && p.elig.OM!==undefined ? !!p.elig.OM : true,
+          FWD: p.elig && p.elig.FWD!==undefined ? !!p.elig.FWD : true
+        }
+      }));
+      if(cleaned.length===0){ flashStatus('That has no players in it.'); return; }
+      if(!confirm(`Import ${cleaned.length} player${cleaned.length===1?'':'s'}? This replaces your current roster.`)) return;
+      state.roster = cleaned;
+      renderRoster();
+      renderFormationTotal();
+      save();
+      flashStatus('Roster imported ✓');
+    }catch(err){
+      flashStatus('Could not read that — is it a roster export?');
+    }
+  }
+
+  function importRosterFile(file){
+    const reader = new FileReader();
+    reader.onload = ()=> applyImportedRosterJson(reader.result);
+    reader.readAsText(file);
+  }
+
+  function addPlayer(){
+    const name = newPlayerName.value.trim();
+    if(!name) return;
+    const usedNumbers = state.roster.map(p=>p.number);
+    let n = 1; while(usedNumbers.includes(n)) n++;
+    state.roster.push({
+      id: uid(), name, number: n, rating: 3, out: false,
+      elig: {GK:false, CD:false, OD:true, CM:false, OM:true, FWD:true}
+    });
+    newPlayerName.value='';
+    renderRoster(); renderFormationTotal(); save();
+  }
+
+  function renderRoster(){
+    rosterList.innerHTML='';
+    document.getElementById('rosterHeader').style.display = state.roster.length>0 ? 'flex' : 'none';
+    document.getElementById('rhRating').style.display = state.ratingsEnabled ? 'block' : 'none';
+    if(state.roster.length===0){
+      rosterList.innerHTML = `<div class="empty-state"><div class="display">No players yet</div>Add your roster above to get started.</div>`;
+      renderRosterAlert();
+      return;
+    }
+    const active = state.roster.filter(p=>!p.out);
+    const out = state.roster.filter(p=>p.out);
+
+    active.forEach(p=> rosterList.appendChild(buildPlayerRow(p)));
+
+    if(out.length>0){
+      const divider = document.createElement('div');
+      divider.className='out-divider';
+      divider.textContent = `Out today (${out.length})`;
+      rosterList.appendChild(divider);
+      out.forEach(p=> rosterList.appendChild(buildPlayerRow(p)));
+    }
+    renderRosterAlert();
+  }
+
+  function buildPlayerRow(p){
+    const row = document.createElement('div');
+    row.className = 'player-row' + (p.out ? ' is-out' : '');
+    row.innerHTML = `
+      <div class="player-top">
+        <input type="number" class="jersey-input" value="${p.number}" min="0" max="99">
+        <input type="text" class="pname" value="${escapeHtml(p.name)}">
+        ${state.ratingsEnabled ? `<input type="number" class="rating-input" value="${ratingOf(p)}" min="1" max="5" step="0.5" title="Rating (1-5)">` : ''}
+        <button class="out-toggle ${p.out?'on':''}" title="Toggle out for the day">${p.out ? 'OUT' : 'Out?'}</button>
+        <button class="remove-btn" title="Remove">✕</button>
+      </div>
+      ${p.out
+        ? `<div class="out-note">Sitting out today — excluded from lineups</div>`
+        : `<div class="pos-chips">
+            <div class="chip gk ${p.elig.GK?'on':''}" data-pos="GK" title="Goalkeeper">GK</div>
+            <div class="chip center ${p.elig.CD?'on':''}" data-pos="CD" title="Center defender">CD</div>
+            <div class="chip ${p.elig.OD?'on':''}" data-pos="OD" title="Outside defender (LD/RD)">OD</div>
+            <div class="chip center ${p.elig.CM?'on':''}" data-pos="CM" title="Center midfielder">CM</div>
+            <div class="chip ${p.elig.OM?'on':''}" data-pos="OM" title="Outside midfielder (LM/RM)">OM</div>
+            <div class="chip ${p.elig.FWD?'on':''}" data-pos="FWD" title="Forward">F</div>
+          </div>`
+      }
+    `;
+    row.querySelector('.pname').oninput = (e)=>{ p.name = e.target.value; save(); };
+    row.querySelector('.jersey-input').onchange = (e)=>{
+      const n = parseInt(e.target.value);
+      p.number = isNaN(n) ? p.number : n;
+      e.target.value = p.number;
+      save();
+    };
+    const ratingInput = row.querySelector('.rating-input');
+    if(ratingInput){
+      ratingInput.onchange = (e)=>{
+        p.rating = clampRating(e.target.value);
+        e.target.value = p.rating;
+        save();
+        if(state.lineups) renderGame();
+      };
+    }
+    row.querySelectorAll('.chip').forEach(chip=>{
+      chip.onclick = ()=>{
+        const pos = chip.dataset.pos;
+        p.elig[pos] = !p.elig[pos];
+        chip.classList.toggle('on', p.elig[pos]);
+        save();
+      };
+    });
+    row.querySelector('.out-toggle').onclick = ()=>{
+      p.out = !p.out;
+      save();
+      renderRoster();
+      renderFormationTotal();
+      if(state.lineups) renderGame();
+    };
+    row.querySelector('.remove-btn').onclick = ()=>{
+      state.roster = state.roster.filter(x=>x.id!==p.id);
+      renderRoster(); renderFormationTotal(); save();
+    };
+    return row;
+  }
+
+  function renderRosterAlert(){
+    const el = document.getElementById('rosterAlert');
+    const need = fieldSize();
+    const active = state.roster.filter(p=>!p.out);
+    if(state.roster.length===0){ el.innerHTML=''; return; }
+    if(active.length < need){
+      el.innerHTML = `<div class="alert">You've got ${active.length} available player${active.length===1?'':'s'} but need ${need} to fill the field. Add more, mark fewer players out, or switch formats.</div>`;
+    } else if(!active.some(p=>p.elig.GK)){
+      el.innerHTML = `<div class="alert">No available player is marked eligible for GK — the randomizer will pick anyone when it has to.</div>`;
+    } else {
+      el.innerHTML='';
+    }
+  }
+
+  function ratingOf(p){ return typeof p.rating==='number' ? p.rating : 3; }
+  function clampRating(v){
+    v = parseFloat(v);
+    if(isNaN(v)) v = 3;
+    v = Math.min(5, Math.max(1, v));
+    v = Math.round(v*2)/2;
+    return v;
+  }
+  function escapeHtml(s){
+    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+  }
+
+  // ---------- randomization ----------
+  // Builds one lineup, balancing minutes against whatever's already been saved to Q1/Q2/Q3/Q4
+  // today (custom-named lineups like "Overtime" are ignored for this). So re-randomizing before
+  // saving always re-rolls from the same baseline, and each saved quarter shifts who's favored next.
+  function generateWorkingLineup(){
+    const players = state.roster.filter(p=>!p.out);
+    const pos = positions();
+    const minutes = {}; const gkMinutes = {}; const benchCount = {};
+    players.forEach(p=>{ minutes[p.id]=0; gkMinutes[p.id]=0; benchCount[p.id]=0; });
+
+    // Only quarter slots (Q1, Q2, Q3, ...) feed the balancing math — custom-named lineups
+    // (e.g. "Overtime") are one-offs and shouldn't skew who's "owed" playing time.
+    const QUARTER_LABEL_RE = /^Q\d+$/;
+    const quarterLineups = state.savedLineups.filter(l=>QUARTER_LABEL_RE.test(l.label));
+    const priorGKs = new Set();
+    quarterLineups.forEach(l=>{
+      Object.entries(l.slots).forEach(([slot,id])=>{
+        if(minutes[id]===undefined) return; // player no longer active/out today
+        minutes[id] += state.periodLength;
+        if(slot==='GK'){ gkMinutes[id] += state.periodLength; priorGKs.add(id); }
+      });
+      l.bench.forEach(id=>{
+        if(benchCount[id]===undefined) return;
+        benchCount[id] += 1;
+      });
+    });
+
+    const pool = shuffle(players);
+    const assigned = new Set();
+    const slots = {};
+
+    // Goalkeeper
+    let gkCandidates = pool.filter(p=>p.elig.GK && !assigned.has(p.id));
+    if(gkCandidates.length===0) gkCandidates = pool.filter(p=>!assigned.has(p.id));
+    if(state.avoidRepeatGK){
+      // Prefer anyone who hasn't already played GK in Q1-Q4 today, when that's possible.
+      const freshCandidates = gkCandidates.filter(p=>!priorGKs.has(p.id));
+      if(freshCandidates.length>0) gkCandidates = freshCandidates;
+    }
+    gkCandidates.sort((a,b)=> gkMinutes[a.id]-gkMinutes[b.id]);
+    const gk = gkCandidates[0];
+    if(gk){ slots.GK = gk.id; assigned.add(gk.id); }
+
+    // Outfield slots: fill in random order so no single slot always gets first pick.
+    // Each slot tries its specialist chip first (e.g. CD), then its fallback chip (e.g. OD), then anyone left.
+    const outfieldSlots = shuffle([...pos.DEF, ...pos.MID, ...pos.FWD]);
+    outfieldSlots.forEach(slot=>{
+      const chain = SLOT_ELIG_CHAIN[slot] || [];
+      let candidates = [];
+      for(const key of chain){
+        candidates = pool.filter(p=>!assigned.has(p.id) && p.elig[key]);
+        if(candidates.length>0) break;
+      }
+      if(candidates.length===0) candidates = pool.filter(p=>!assigned.has(p.id));
+      if(candidates.length===0) return;
+      // Least total time played gets priority; if tied, whoever's sat more quarters on the bench goes next.
+      candidates.sort((a,b)=> (minutes[a.id]-minutes[b.id]) || (benchCount[b.id]-benchCount[a.id]));
+      const chosen = candidates[0];
+      slots[slot] = chosen.id;
+      assigned.add(chosen.id);
+    });
+
+    const bench = pool.filter(p=>!assigned.has(p.id)).map(p=>p.id);
+
+    state.workingLineup = {slots, bench};
+    state.activeView = 'working';
+    save();
+    renderGame();
+  }
+  document.getElementById('randomizeBtn').onclick = generateWorkingLineup;
+
+  function saveWorkingLineupAs(label){
+    label = (label||'').trim();
+    if(!label || !state.workingLineup) return;
+    const existing = state.savedLineups.find(l=>l.label===label);
+    if(existing && !confirm(`"${label}" already has a saved lineup. Replace it?`)) return;
+    const entry = {id: existing ? existing.id : uid(), label, slots: state.workingLineup.slots, bench: state.workingLineup.bench};
+    state.savedLineups = state.savedLineups.filter(l=>l.label!==label);
+    state.savedLineups.push(entry);
+    state.workingLineup = null;
+    state.activeView = entry.id;
+    save();
+    renderGame();
+  }
+
+  function deleteSavedLineup(id){
+    state.savedLineups = state.savedLineups.filter(l=>l.id!==id);
+    if(state.activeView===id){
+      state.activeView = state.workingLineup ? 'working' : (state.savedLineups[0] ? state.savedLineups[0].id : null);
+    }
+    save();
+    renderGame();
+  }
+
+  // ---------- game day rendering ----------
+  function playerById(id){ return state.roster.find(p=>p.id===id); }
+  function currentLineup(){
+    if(state.activeView==='working') return state.workingLineup;
+    return state.savedLineups.find(l=>l.id===state.activeView) || null;
+  }
+  function currentLineupLabel(){
+    if(state.activeView==='working') return 'New lineup (unsaved)';
+    const l = state.savedLineups.find(l=>l.id===state.activeView);
+    return l ? l.label : '';
+  }
+
+  // ---------- drag-and-drop swapping (field <-> field, field <-> bench, bench <-> bench) ----------
+  function swapPlayers(lu, idA, idB){
+    if(!lu || !idA || !idB || idA===idB) return;
+    const slotA = Object.keys(lu.slots).find(s=>lu.slots[s]===idA);
+    const slotB = Object.keys(lu.slots).find(s=>lu.slots[s]===idB);
+    const benchIdxA = lu.bench.indexOf(idA);
+    const benchIdxB = lu.bench.indexOf(idB);
+
+    if(slotA && slotB){
+      lu.slots[slotA] = idB; lu.slots[slotB] = idA;
+    } else if(slotA && benchIdxB>=0){
+      lu.slots[slotA] = idB; lu.bench[benchIdxB] = idA;
+    } else if(slotB && benchIdxA>=0){
+      lu.slots[slotB] = idA; lu.bench[benchIdxA] = idB;
+    } else if(benchIdxA>=0 && benchIdxB>=0){
+      lu.bench[benchIdxA] = idB; lu.bench[benchIdxB] = idA;
+    }
+  }
+
+  let dragState = null; // {playerId, sourceEl, clone}
+
+  function startDrag(e, el, playerId){
+    if(e.button!==undefined && e.button!==0) return; // left click / primary touch only
+    e.preventDefault();
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    const p = playerById(playerId);
+    const clone = document.createElement('div');
+    clone.className = 'drag-clone';
+    clone.textContent = p ? p.number : '';
+    clone.style.left = e.clientX+'px';
+    clone.style.top = e.clientY+'px';
+    document.body.appendChild(clone);
+    // Field drags start on the invisible hotspot overlay; dim the visible SVG token instead of it.
+    const visualEl = el.classList.contains('token-hotspot')
+      ? (el.closest('.pitch-svg-wrap') && el.closest('.pitch-svg-wrap').querySelector(`g.token[data-player-id="${playerId}"]`)) || el
+      : el;
+    visualEl.classList.add('token-dragging');
+    document.body.classList.add('drag-in-progress'); // belt-and-suspenders scroll lock — see CSS
+    dragState = {playerId, sourceEl: el, visualEl, clone};
+  }
+
+  function moveDrag(e){
+    if(!dragState) return;
+    e.preventDefault();
+    dragState.clone.style.left = e.clientX+'px';
+    dragState.clone.style.top = e.clientY+'px';
+  }
+
+  function endDrag(e){
+    if(!dragState) return;
+    const {playerId, visualEl, clone} = dragState;
+    clone.remove();
+    visualEl.classList.remove('token-dragging');
+    document.body.classList.remove('drag-in-progress');
+    dragState = null;
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const targetTokenEl = target ? target.closest('[data-player-id]') : null;
+    if(targetTokenEl){
+      const targetId = targetTokenEl.dataset.playerId;
+      if(targetId && targetId!==playerId){
+        const lu = currentLineup();
+        if(lu){
+          swapPlayers(lu, playerId, targetId);
+          save();
+          renderGame();
+        }
+      }
+    }
+  }
+
+  document.addEventListener('pointermove', moveDrag, {passive:false});
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+
+  function renderGame(){
+    const btn = document.getElementById('randomizeBtn');
+    btn.disabled = state.roster.filter(p=>!p.out).length < fieldSize();
+    btn.textContent = state.workingLineup ? '🔀 Create Another Lineup' : '🔀 Create a Lineup';
+    document.getElementById('avoidRepeatGkInput').checked = !!state.avoidRepeatGK;
+
+    const content = document.getElementById('gameContent');
+    const lu = currentLineup();
+
+    if(!lu){
+      content.innerHTML = `<div class="card"><div class="empty-state"><div class="display">No lineup yet</div>Set up your roster, then hit Randomize.</div></div>`;
+      return;
+    }
+
+    // tabs: working (if present) + saved lineups
+    let tabsHtml = `<div class="period-tabs">`;
+    if(state.workingLineup){
+      tabsHtml += `<button data-view="working" class="${state.activeView==='working'?'active':''}">New*</button>`;
+    }
+    state.savedLineups.forEach(l=>{
+      tabsHtml += `<button data-view="${l.id}" class="${state.activeView===l.id?'active':''}">${escapeHtml(l.label)} <span class="tab-x" data-del="${l.id}" title="Delete">✕</span></button>`;
+    });
+    tabsHtml += `</div>`;
+
+    // save-as controls (only relevant when viewing the unsaved working lineup)
+    let saveHtml = '';
+    if(state.activeView==='working'){
+      const periodLabels = [];
+      for(let i=1;i<=state.numPeriods;i++) periodLabels.push(`Q${i}`);
+      saveHtml = `<div class="card">
+        <div class="section-label">Save this lineup as…</div>
+        <div class="save-btn-row">
+          ${periodLabels.map(lbl=>`<button class="btn-ghost btn-small save-as-btn" data-label="${lbl}">${lbl}${state.savedLineups.some(l=>l.label===lbl)?' •':''}</button>`).join('')}
+          <button class="btn-ghost btn-small" id="customSaveBtn">Custom…</button>
+        </div>
+        <div class="custom-save-row" id="customSaveRow" style="display:none;">
+          <input type="text" id="customLabelInput" placeholder="e.g. Overtime">
+          <button class="btn btn-gold btn-small" id="confirmCustomSave">Save</button>
+        </div>
+      </div>`;
+    }
+
+    // pitch svg
+    const svg = renderPitchSVG(lu);
+
+    // bench
+    const label = currentLineupLabel();
+    let benchHtml = `<div class="section-label">Bench — ${escapeHtml(label)}</div><div class="bench-strip">`;
+    if(lu.bench.length===0){
+      benchHtml += `<div style="font-size:12px;color:var(--ink-soft);padding:6px 0;">Everyone's on the field.</div>`;
+    }
+    lu.bench.forEach(id=>{
+      const p = playerById(id); if(!p) return;
+      benchHtml += `<div class="bench-chip token" data-player-id="${p.id}"><div class="jersey">${p.number}</div><div class="name">${escapeHtml(p.name)}</div></div>`;
+    });
+    benchHtml += `</div>`;
+
+    // group ratings for this lineup (only when the ratings system is enabled)
+    let ratingsHtml = '';
+    if(state.ratingsEnabled){
+      const RATING_GROUPS = {
+        Attack: ['LF','RF','LM','CM','RM','LCM','RCM'],
+        Defense: ['LD','CD','LCD','RCD','RD'],
+        Possession: ['CD','LCD','RCD','CM','LCM','RCM']
+      };
+      function avgOfIds(ids){
+        const vals = ids.map(id=>{ const p=playerById(id); return p ? ratingOf(p) : null; }).filter(v=>v!=null);
+        if(vals.length===0) return null;
+        return vals.reduce((a,b)=>a+b,0)/vals.length;
+      }
+      const ratingRows = [
+        {label:'Attack', avg: avgOfIds(RATING_GROUPS.Attack.map(s=>lu.slots[s]).filter(Boolean))},
+        {label:'Defense', avg: avgOfIds(RATING_GROUPS.Defense.map(s=>lu.slots[s]).filter(Boolean))},
+        {label:'Possession', avg: avgOfIds(RATING_GROUPS.Possession.map(s=>lu.slots[s]).filter(Boolean))},
+        {label:'Bench', avg: avgOfIds(lu.bench)}
+      ];
+      ratingsHtml = `<div class="card"><div class="section-label">Group Ratings — ${escapeHtml(label)}</div>`;
+      ratingRows.forEach(g=>{
+        const pct = g.avg!=null ? (g.avg/5)*100 : 0;
+        const display = g.avg!=null ? g.avg.toFixed(1) : '—';
+        ratingsHtml += `
+          <div class="balance-row">
+            <div class="name">${g.label}</div>
+            <div class="balance-bar-track"><div class="balance-bar-fill" style="width:${pct}%;"></div></div>
+            <div class="balance-min mono">${display}</div>
+          </div>`;
+      });
+      ratingsHtml += `<div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Average rating (1–5) of players in each slot group</div></div>`;
+    }
+
+    // balance chart across all SAVED lineups (players who are out today aren't part of this)
+    const rosterInPlay = state.roster.filter(p=>!p.out);
+    let balanceHtml = `<div class="card"><div class="section-label">Playing time — saved lineups</div>`;
+    if(state.savedLineups.length===0){
+      balanceHtml += `<div style="font-size:12.5px;color:var(--ink-soft);">Save at least one lineup to see playing-time balance across the day.</div></div>`;
+    } else {
+      const totals = {}; const gkTotals = {}; let maxTotal = 1;
+      rosterInPlay.forEach(p=>{ totals[p.id]=0; gkTotals[p.id]=0; });
+      state.savedLineups.forEach(l=>{
+        Object.entries(l.slots).forEach(([slot,id])=>{
+          if(totals[id]===undefined) return;
+          totals[id]=(totals[id]||0)+state.periodLength;
+          if(slot==='GK') gkTotals[id]=(gkTotals[id]||0)+state.periodLength;
+        });
+      });
+      Object.values(totals).forEach(v=>{ if(v>maxTotal) maxTotal=v; });
+
+      rosterInPlay.slice().sort((a,b)=> totals[b.id]-totals[a.id]).forEach(p=>{
+        const total = totals[p.id]||0;
+        const gk = gkTotals[p.id]||0;
+        const pct = Math.round((total/maxTotal)*100);
+        const gkPct = total>0 ? Math.round((gk/total)*100) : 0;
+        balanceHtml += `
+          <div class="balance-row">
+            <div class="name">${escapeHtml(p.name)}</div>
+            <div class="balance-bar-track"><div class="balance-bar-fill gk-mix" style="width:${pct}%; --gkpct:${gkPct}%;"></div></div>
+            <div class="balance-min mono">${total}m</div>
+          </div>`;
+      });
+      balanceHtml += `<div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Dark green segment = minutes played at GK</div></div>`;
+    }
+
+    content.innerHTML = `
+      ${tabsHtml}
+      ${saveHtml}
+      <div class="pitch-card">${svg}</div>
+      <div class="drag-hint">Drag a player to swap positions, or sub with the bench</div>
+      <div class="card">${benchHtml}</div>
+      ${ratingsHtml}
+      ${balanceHtml}
+    `;
+
+    content.querySelectorAll('[data-player-id]').forEach(el=>{
+      el.addEventListener('pointerdown', (e)=> startDrag(e, el, el.dataset.playerId));
+    });
+
+    content.querySelectorAll('.period-tabs button').forEach(b=>{
+      b.onclick = (e)=>{
+        if(e.target.classList.contains('tab-x')) return; // handled separately below
+        state.activeView = b.dataset.view;
+        save(); renderGame();
+      };
+    });
+    content.querySelectorAll('.tab-x').forEach(x=>{
+      x.onclick = (e)=>{
+        e.stopPropagation();
+        deleteSavedLineup(x.dataset.del);
+      };
+    });
+    content.querySelectorAll('.save-as-btn').forEach(b=>{
+      b.onclick = ()=> saveWorkingLineupAs(b.dataset.label);
+    });
+    const customBtn = document.getElementById('customSaveBtn');
+    if(customBtn){
+      customBtn.onclick = ()=>{
+        document.getElementById('customSaveRow').style.display = 'flex';
+        document.getElementById('customLabelInput').focus();
+      };
+      document.getElementById('confirmCustomSave').onclick = ()=>{
+        saveWorkingLineupAs(document.getElementById('customLabelInput').value);
+      };
+      document.getElementById('customLabelInput').addEventListener('keydown', e=>{
+        if(e.key==='Enter') saveWorkingLineupAs(e.target.value);
+      });
+    }
+  }
+
+  function spreadX(count, width, margin){
+    const usable = width - margin*2;
+    const xs = [];
+    for(let i=0;i<count;i++){
+      xs.push(margin + (i+0.5)*(usable/count));
+    }
+    return xs;
+  }
+
+  function escapeHtmlSvg(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function renderPitchSVG(lu){
+    const W=400, H=560, BOTTOM_PAD=26;
+    const pos = positions();
+    let dots='';
+    const hotspots=[]; // {x,y,id} in SVG coordinate space — becomes an HTML overlay so touch-scroll works everywhere else
+
+    function dot(x,y,slotName,isGK){
+      const id = lu.slots[slotName];
+      const p = playerById(id);
+      if(!p) return '';
+      hotspots.push({x, y, id: p.id});
+      const fill = isGK ? 'var(--gold)' : '#FFFFFF';
+      const textFill = isGK ? '#fff' : 'var(--ink)';
+      const stroke = isGK ? 'var(--gold-deep)' : 'var(--pitch-deep)';
+      const shortName = p.name.length>9 ? p.name.slice(0,8)+'…' : p.name;
+      return `
+        <g class="token" data-player-id="${p.id}" data-slot="${slotName}">
+          <text x="${x}" y="${y-30}" text-anchor="middle" font-family="IBM Plex Mono" font-weight="700" font-size="11" fill="var(--pitch-line)" letter-spacing="0.05em">${slotName}</text>
+          <circle cx="${x}" cy="${y}" r="24" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>
+          <text x="${x}" y="${y+6}" text-anchor="middle" font-family="IBM Plex Mono" font-weight="700" font-size="16" fill="${textFill}">${p.number}</text>
+          <text x="${x}" y="${y+40}" text-anchor="middle" font-family="Inter" font-weight="700" font-size="12" fill="#F5F2E8">${escapeHtmlSvg(shortName)}</text>
+        </g>`;
+    }
+
+    // GK near bottom, FWD near top (attacking up)
+    dots += dot(W/2, H-38, 'GK', true);
+
+    const defXs = spreadX(pos.DEF.length, W, 55);
+    pos.DEF.forEach((slot,i)=> dots += dot(defXs[i], H-160, slot, false));
+
+    const midXs = spreadX(pos.MID.length, W, 55);
+    pos.MID.forEach((slot,i)=> dots += dot(midXs[i], H-300, slot, false));
+
+    const fwdXs = spreadX(pos.FWD.length, W, 65);
+    pos.FWD.forEach((slot,i)=> dots += dot(fwdXs[i], H-430, slot, false));
+
+    const svg = `
+      <svg viewBox="0 0 ${W} ${H+BOTTOM_PAD}" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="10" width="${W-20}" height="${H-20}" rx="10" fill="none" stroke="var(--pitch-line)" stroke-width="2"/>
+        <line x1="10" y1="${H/2}" x2="${W-10}" y2="${H/2}" stroke="var(--pitch-line)" stroke-width="2"/>
+        <circle cx="${W/2}" cy="${H/2}" r="45" fill="none" stroke="var(--pitch-line)" stroke-width="2"/>
+        <rect x="${W/2-70}" y="10" width="140" height="55" fill="none" stroke="var(--pitch-line)" stroke-width="2"/>
+        <rect x="${W/2-70}" y="${H-65}" width="140" height="55" fill="none" stroke="var(--pitch-line)" stroke-width="2"/>
+        ${dots}
+      </svg>`;
+
+    // HTML hotspots sit on top of the SVG, sized just around each token (circle + label + name).
+    // Only these block touch-scrolling — every other part of the pitch (empty space, corners,
+    // unused formation slots) scrolls normally, since SVG-level touch-action isn't reliable on mobile.
+    const HS_W = 60, HS_H = 84; // px, in SVG coordinate units — safe clearance even at 4-across rows
+    const hotspotsHtml = hotspots.map(h=>{
+      const leftPct = (h.x/W)*100;
+      const topPct = ((h.y+6)/(H+BOTTOM_PAD))*100;
+      const widthPct = (HS_W/W)*100;
+      const heightPct = (HS_H/(H+BOTTOM_PAD))*100;
+      return `<div class="token-hotspot" data-player-id="${h.id}" style="left:${leftPct}%; top:${topPct}%; width:${widthPct}%; height:${heightPct}%;"></div>`;
+    }).join('');
+
+    return `<div class="pitch-svg-wrap" style="aspect-ratio:${W} / ${H+BOTTOM_PAD};">${svg}<div class="token-hotspots">${hotspotsHtml}</div></div>`;
+  }
+
+  // ---------- init ----------
+  function renderAll(){
+    fmtBtns.forEach(b=> b.classList.toggle('active', b.dataset.fmt===state.format));
+    numPeriodsInput.value = state.numPeriods;
+    periodLengthInput.value = state.periodLength;
+    document.getElementById('ratingsEnabledInput').checked = !!state.ratingsEnabled;
+    renderFormationToggle();
+    renderFormationDisplay();
+    renderRoster();
+    renderFormationTotal();
+    renderFormatPill();
+  }
+
+  document.getElementById('copyEmailBtn').onclick = async ()=>{
+    const btn = document.getElementById('copyEmailBtn');
+    const email = 'mightychicken93@yahoo.com';
+    try{
+      await navigator.clipboard.writeText(email);
+      btn.textContent = 'Copied ✓';
+    }catch(e){
+      // Clipboard API blocked — select the text so the user can copy manually.
+      const range = document.createRange();
+      range.selectNode(document.getElementById('contactEmailText'));
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      btn.textContent = 'Select & copy';
+    }
+    setTimeout(()=>{ btn.textContent = 'Copy'; }, 2000);
+  };
+
+  // MIT App Inventor's WebViewer doesn't reliably navigate mailto: links or open new tabs (target="_blank")
+  // on its own. If this page is running inside App Inventor's WebViewer (it injects window.AppInventor),
+  // hand the URL off through the WebViewString bridge instead — read it in Blocks with a Clock timer
+  // polling WebViewer1.WebViewString, then fire it through an ActivityStarter
+  // (Action: android.intent.action.VIEW, DataUri: WebViewer1.WebViewString). Regular browsers
+  // (no window.AppInventor) keep using the plain href links, unaffected.
+  function bridgeLinkForAppInventor(elId, url){
+    document.getElementById(elId).addEventListener('click', function(e){
+      if(window.AppInventor && typeof window.AppInventor.setWebViewString==='function'){
+        e.preventDefault();
+        window.AppInventor.setWebViewString(url);
+      }
+    });
+  }
+  bridgeLinkForAppInventor('contactLink', 'mailto:mightychicken93@yahoo.com');
+  bridgeLinkForAppInventor('donateLink', 'https://ko-fi.com/reclineupbuilder');
+
+  document.getElementById('manualSaveBtn').onclick = openSaveSheet;
+  document.getElementById('manualLoadBtn').onclick = openLoadSheet;
+  document.getElementById('sheetBackdrop').onclick = closeSheet;
+  document.getElementById('avoidRepeatGkInput').onchange = (e)=>{
+    state.avoidRepeatGK = e.target.checked;
+    save();
+  };
+  document.getElementById('ratingsEnabledInput').onchange = (e)=>{
+    state.ratingsEnabled = e.target.checked;
+    renderRoster();
+    if(state.workingLineup || state.savedLineups.length>0) renderGame();
+    save();
+  };
+
+  load().then(()=>{
+    if(!state.roster) state.roster = [];
+    renderAll();
+    showTab('setup');
+  });
+
+})();
+
+// Registered separately from the main IIFE state — purely for offline caching, no app logic here.
+// Silently does nothing when opened as a local file or inside an environment that blocks it
+// (e.g. Claude.ai's preview, or MIT App Inventor's WebViewer) — only activates once hosted over HTTPS.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{ /* not hosted over https yet — fine, app still works */ });
+  });
+}
+</script>
+</body>
+</html>
