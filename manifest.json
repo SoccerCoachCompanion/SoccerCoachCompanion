@@ -1,7 +1,7 @@
 {
   "name": "Soccer Coach Companion",
   "short_name": "Soccer Coach Companion",
-  "description": "Manage youth soccer lineups, set rosters, and balance playing time.",
+  "description": "Randomize and manage youth soccer lineups, rosters, and playing-time balance.",
   "start_url": "./index.html",
   "scope": "./",
   "id": "./index.html",
