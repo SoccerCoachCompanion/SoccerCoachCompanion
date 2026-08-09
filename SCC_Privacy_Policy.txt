@@ -1,0 +1,37 @@
+Soccer Coach Companion (App) Privacy Policy
+
+Soccer Coach Companion ("we," "our," or "us") is built as a commercial/free app. This SERVICE is provided at no cost and is intended for use as is.
+
+This page informs visitors regarding our policies with the collection, use, and disclosure of Personal Information if anyone decides to use our Service.
+
+1. Information Collection and Use
+
+We do not collect, store, transmit, or process any personal data, account information, or user activity within the App.
+
+The App functions as a web-hosted application delivered via GitHub Pages. We do not use cookies, user identification trackers, local storage tracking, or database logging to gather information about your identity or usage habits.
+
+2. Permissions
+
+If the App requires any system permissions on your device (such as camera or storage access), these are used solely for enabling local app functionality on your device. No data accessed through these permissions is recorded, saved, or shared externally.
+
+3. Third-Party Services
+
+The App is hosted on GitHub Pages (a service provided by GitHub, Inc.). When you access the App, GitHub’s servers automatically receive standard network information necessary to deliver web traffic, such as your IP address, browser type, and request timestamps.
+
+* This network data is handled directly by GitHub in accordance with the GitHub Privacy Statement.
+
+* We (the developers) do not collect, store, analyze, or aggregate these server logs, nor do we combine this data with any personal information.
+
+4. Children's Privacy
+
+Because our App does not collect any personal information, it strictly complies with the Children's Online Privacy Protection Act (COPPA) and Google Play's Families Policy. We do not knowingly collect personal data from anyone, including children under 13.
+
+5. Changes to This Privacy Policy
+
+We may update our Privacy Policy from time to time. You are advised to review this page periodically for any changes. Any updates are effective immediately after they are posted on this page.
+
+6. Contact Us
+
+If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at:
+
+    Email: SoccerCoachCompanion@gmail.com
