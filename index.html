@@ -52,8 +52,8 @@
 
   nav.tabs{display:flex; gap:6px; margin-bottom:18px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px;}
   nav.tabs button{
-    flex:1; border:none; background:transparent; padding:10px 8px; border-radius:9px;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:13px; color:var(--ink-soft); cursor:pointer;
+    flex:1; border:none; background:transparent; padding:10px 4px; border-radius:9px;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; color:var(--ink-soft); cursor:pointer;
     transition:background .15s, color .15s;
   }
   nav.tabs button.active{background:var(--ink); color:var(--bg);}
@@ -129,8 +129,10 @@
     color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono';
   }
   .chip.on{background:var(--gold); border-color:var(--gold-deep); color:#fff;}
-  .chip.gk.on{background:var(--pitch); border-color:var(--pitch-deep); color:#fff;}
-  .chip.center.on{background:var(--coral); border-color:#a3402c; color:#fff;}
+  .chip.gk.on{background:var(--gold); border-color:var(--gold-deep); color:#fff;}
+  .chip.def.on{background:#3B6FA0; border-color:#2C5680; color:#fff;}
+  .chip.mid.on{background:#7B5EA7; border-color:#5F4785; color:#fff;}
+  .chip.fwd.on{background:var(--coral); border-color:#a3402c; color:#fff;}
   .remove-btn{border:none; background:transparent; color:var(--ink-soft); cursor:pointer; font-size:17px; padding:2px 4px; flex-shrink:0;}
   .remove-btn:hover{color:var(--coral);}
   .out-toggle{
@@ -147,6 +149,21 @@
 
   .add-player-row{display:flex; gap:8px; margin-top:12px;}
   .add-player-row input{flex:1;}
+
+  .score-row{border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:10px; background:#FDFCF8;}
+  .score-row:last-child{margin-bottom:0;}
+  .score-top{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .score-name{font-weight:700; font-size:14.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .score-stats{display:flex; gap:10px;}
+  .score-stat{flex:1; background:#EFEBDD; border-radius:10px; padding:7px 10px; display:flex; flex-direction:column; gap:5px; align-items:center;}
+  .score-stat-label{font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft);}
+  .score-controls{display:flex; align-items:center; gap:10px;}
+  .score-count{font-size:17px; font-weight:700; color:var(--ink); min-width:20px; text-align:center;}
+  .score-btn{border:none; border-radius:8px; width:30px; height:30px; font-weight:800; font-size:14px; cursor:pointer; flex-shrink:0;}
+  .score-btn.plus{background:var(--gold); color:#fff;}
+  .score-btn.plus:active{background:var(--gold-deep);}
+  .score-btn.minus{background:#fff; color:var(--ink-soft); border:1.5px solid var(--line);}
+  .score-btn.minus:active{background:var(--line);}
 
   button.btn{
     border:none; border-radius:11px; padding:12px 16px; font-weight:700; font-size:14px; cursor:pointer;
@@ -200,6 +217,22 @@
   .token-hotspots{position:absolute; inset:0;}
   .token-hotspot{position:absolute; transform:translate(-50%,-50%); border-radius:16px;}
 
+  .fullscreen-toggle{
+    position:absolute; top:10px; right:10px; z-index:15; width:32px; height:32px; border-radius:9px;
+    border:1.5px solid rgba(255,255,255,0.35); background:rgba(0,0,0,0.25); color:#fff; font-size:16px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(2px);
+  }
+  .fullscreen-toggle:active{background:rgba(0,0,0,0.4);}
+  .pitch-card.fullscreen-pitch{
+    position:fixed; inset:0; z-index:200; margin:0; border-radius:0; padding:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pitch-card.fullscreen-pitch .pitch-svg-wrap{
+    max-width:100%; max-height:100%;
+  }
+  .pitch-card.fullscreen-pitch .fullscreen-toggle{top:16px; right:16px; width:38px; height:38px; font-size:18px;}
+  body.pitch-fullscreen-active{overflow:hidden;}
+
   .bench-strip{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 8px; touch-action:pan-x;}
   .bench-chip{
     flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:3px; background:#EFEBDD; border:1.5px solid var(--line);
@@ -212,8 +245,23 @@
   .balance-row .name{width:78px; flex-shrink:0; font-size:12px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .balance-bar-track{flex:1; height:16px; background:#EFEBDD; border-radius:8px; overflow:hidden; position:relative;}
   .balance-bar-fill{height:100%; background:var(--gold); border-radius:8px; transition:width .4s ease;}
-  .balance-bar-fill.gk-mix{background:linear-gradient(90deg, var(--pitch) 0%, var(--pitch) var(--gkpct,0%), var(--gold) var(--gkpct,0%));}
   .balance-min{width:54px; flex-shrink:0; font-size:11px; font-family:'IBM Plex Mono'; color:var(--ink-soft); text-align:right;}
+
+  .balance-stacked{display:flex;}
+  .balance-seg{height:100%; transition:width .4s ease;}
+  .seg-gk{background:var(--gold);}
+  .seg-def{background:#3B6FA0;}
+  .seg-mid{background:#7B5EA7;}
+  .seg-fwd{background:var(--coral);}
+  .seg-bench{background:#B9B29A;}
+  .balance-legend{display:flex; flex-wrap:wrap; gap:12px; margin-top:10px;}
+  .balance-legend span{display:flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:var(--ink-soft);}
+  .lg-dot{width:9px; height:9px; border-radius:3px; display:inline-block; flex-shrink:0;}
+  .lg-gk{background:var(--gold);}
+  .lg-def{background:#3B6FA0;}
+  .lg-mid{background:#7B5EA7;}
+  .lg-fwd{background:var(--coral);}
+  .lg-bench{background:#B9B29A;}
 
   .section-label{font-size:11px; text-transform:uppercase; letter-spacing:0.1em; font-weight:700; color:var(--ink-soft); margin:0 0 10px;}
 
@@ -274,8 +322,9 @@
   </header>
 
   <nav class="tabs">
-    <button id="tabSetupBtn" class="active">Roster &amp; Settings</button>
+    <button id="tabSetupBtn" class="active">Roster</button>
     <button id="tabGameBtn">Game Day</button>
+    <button id="tabScoringBtn">Scoring</button>
   </nav>
 
   <!-- SETUP TAB -->
@@ -299,8 +348,8 @@
       <h2>Game clock</h2>
       <p class="sub">Used to split minutes evenly across the roster.</p>
       <div class="row">
-        <div class="field"><label>Periods</label><input type="number" min="1" max="8" id="numPeriods"></div>
-        <div class="field"><label>Minutes / period</label><input type="number" min="1" max="60" id="periodLength"></div>
+        <div class="field"><label>Periods</label><input type="number" min="1" max="16" id="numPeriods"></div>
+        <div class="field"><label>Minutes / period</label><input type="number" min="1" max="45" id="periodLength"></div>
       </div>
     </div>
 
@@ -354,6 +403,17 @@
     <footer class="note">Randomizing balances total minutes, goalkeeper time, and specific position slots across the whole roster.</footer>
   </div>
 
+  <!-- SCORING TAB -->
+  <div id="tabScoring" style="display:none;">
+
+    <div class="card" style="padding-bottom:14px;">
+      <button class="btn btn-ghost" id="resetScoringBtn" style="width:100%;">Reset</button>
+    </div>
+
+    <div id="scoringContent"></div>
+
+  </div>
+
 </div>
 
 <div class="save-bar">
@@ -383,6 +443,15 @@
     CD: ['CD','OD'], LCD: ['CD','OD'], RCD: ['CD','OD'], LD: ['OD','CD'], RD: ['OD','CD'],
     CM: ['CM','OM'], LCM: ['CM','OM'], RCM: ['CM','OM'], LM: ['OM','CM'], RM: ['OM','CM'],
     ST: ['FWD'], LF: ['FWD'], RF: ['FWD'], CF: ['FWD']
+  };
+
+  // Formation-independent slot → broad group, so a lineup saved under a different formation
+  // than the one currently selected still classifies correctly (used by the playing-time chart).
+  const SLOT_GROUP = {
+    GK: 'GK',
+    LD: 'DEF', LCD: 'DEF', CD: 'DEF', RCD: 'DEF', RD: 'DEF',
+    LM: 'MID', LCM: 'MID', CM: 'MID', RCM: 'MID', RM: 'MID',
+    LF: 'FWD', ST: 'FWD', CF: 'FWD', RF: 'FWD'
   };
 
   // Each format offers a few named formations (DEF-MID-FWD notation). Slots within a group
@@ -506,7 +575,7 @@
     return {
       format:'7v7', formation: defaultFormationFor('7v7'), numPeriods:4, periodLength:12,
       roster:[], workingLineup:null, savedLineups:[], activeView:null, avoidRepeatGK:false,
-      ratingsEnabled:false
+      ratingsEnabled:false, scoring:{}
     };
   }
 
@@ -672,6 +741,7 @@
       }));
     }
     if(!state.savedLineups) state.savedLineups = [];
+    if(!state.scoring || typeof state.scoring!=='object') state.scoring = {};
     if(state.workingLineup===undefined) state.workingLineup = null;
     delete state.lineups;
     delete state.activePeriod;
@@ -714,21 +784,24 @@
   // ---------- rendering: tabs ----------
   const tabSetupBtn = document.getElementById('tabSetupBtn');
   const tabGameBtn = document.getElementById('tabGameBtn');
+  const tabScoringBtn = document.getElementById('tabScoringBtn');
   const tabSetup = document.getElementById('tabSetup');
   const tabGame = document.getElementById('tabGame');
+  const tabScoring = document.getElementById('tabScoring');
 
   function showTab(tab){
-    if(tab==='setup'){
-      tabSetup.style.display='block'; tabGame.style.display='none';
-      tabSetupBtn.classList.add('active'); tabGameBtn.classList.remove('active');
-    }else{
-      tabSetup.style.display='none'; tabGame.style.display='block';
-      tabGameBtn.classList.add('active'); tabSetupBtn.classList.remove('active');
-      renderGame();
-    }
+    tabSetup.style.display = tab==='setup' ? 'block' : 'none';
+    tabGame.style.display = tab==='game' ? 'block' : 'none';
+    tabScoring.style.display = tab==='scoring' ? 'block' : 'none';
+    tabSetupBtn.classList.toggle('active', tab==='setup');
+    tabGameBtn.classList.toggle('active', tab==='game');
+    tabScoringBtn.classList.toggle('active', tab==='scoring');
+    if(tab==='game') renderGame();
+    if(tab==='scoring') renderScoring();
   }
   tabSetupBtn.onclick = ()=>showTab('setup');
   tabGameBtn.onclick = ()=>showTab('game');
+  tabScoringBtn.onclick = ()=>showTab('scoring');
 
   // ---------- format / formation ----------
   const fmtBtns = document.querySelectorAll('.fmt-toggle button');
@@ -784,8 +857,16 @@
   // ---------- game clock ----------
   const numPeriodsInput = document.getElementById('numPeriods');
   const periodLengthInput = document.getElementById('periodLength');
-  numPeriodsInput.oninput = ()=>{ state.numPeriods = Math.max(1, parseInt(numPeriodsInput.value)||1); save(); };
-  periodLengthInput.oninput = ()=>{ state.periodLength = Math.max(1, parseInt(periodLengthInput.value)||1); save(); };
+  numPeriodsInput.onchange = ()=>{
+    state.numPeriods = Math.min(16, Math.max(1, parseInt(numPeriodsInput.value)||1));
+    numPeriodsInput.value = state.numPeriods;
+    save();
+  };
+  periodLengthInput.onchange = ()=>{
+    state.periodLength = Math.min(45, Math.max(1, parseInt(periodLengthInput.value)||1));
+    periodLengthInput.value = state.periodLength;
+    save();
+  };
 
   // ---------- roster ----------
   const rosterList = document.getElementById('rosterList');
@@ -869,7 +950,7 @@
     document.getElementById('rosterHeader').style.display = state.roster.length>0 ? 'flex' : 'none';
     document.getElementById('rhRating').style.display = state.ratingsEnabled ? 'block' : 'none';
     if(state.roster.length===0){
-      rosterList.innerHTML = `<div class="empty-state"><div class="display">No players yet</div>Add your roster above to get started.</div>`;
+      rosterList.innerHTML = `<div class="empty-state"><div class="display">No players yet</div>Add players below to get started.</div>`;
       renderRosterAlert();
       return;
     }
@@ -903,11 +984,11 @@
         ? `<div class="out-note">Sitting out today — excluded from lineups</div>`
         : `<div class="pos-chips">
             <div class="chip gk ${p.elig.GK?'on':''}" data-pos="GK" title="Goalkeeper">GK</div>
-            <div class="chip center ${p.elig.CD?'on':''}" data-pos="CD" title="Center defender">CD</div>
-            <div class="chip ${p.elig.OD?'on':''}" data-pos="OD" title="Outside defender (LD/RD)">OD</div>
-            <div class="chip center ${p.elig.CM?'on':''}" data-pos="CM" title="Center midfielder">CM</div>
-            <div class="chip ${p.elig.OM?'on':''}" data-pos="OM" title="Outside midfielder (LM/RM)">OM</div>
-            <div class="chip ${p.elig.FWD?'on':''}" data-pos="FWD" title="Forward">F</div>
+            <div class="chip def ${p.elig.CD?'on':''}" data-pos="CD" title="Center defender">CD</div>
+            <div class="chip def ${p.elig.OD?'on':''}" data-pos="OD" title="Outside defender (LD/RD)">OD</div>
+            <div class="chip mid ${p.elig.CM?'on':''}" data-pos="CM" title="Center midfielder">CM</div>
+            <div class="chip mid ${p.elig.OM?'on':''}" data-pos="OM" title="Outside midfielder (LM/RM)">OM</div>
+            <div class="chip fwd ${p.elig.FWD?'on':''}" data-pos="FWD" title="Forward">F</div>
           </div>`
       }
     `;
@@ -945,6 +1026,7 @@
     };
     row.querySelector('.remove-btn').onclick = ()=>{
       state.roster = state.roster.filter(x=>x.id!==p.id);
+      delete state.scoring[p.id];
       renderRoster(); renderFormationTotal(); save();
     };
     return row;
@@ -962,6 +1044,66 @@
     } else {
       el.innerHTML='';
     }
+  }
+
+  function statOf(playerId){
+    return state.scoring[playerId] || {goals:0, assists:0};
+  }
+  function bumpStat(playerId, stat, delta){
+    if(!state.scoring[playerId]) state.scoring[playerId] = {goals:0, assists:0};
+    state.scoring[playerId][stat] = Math.max(0, state.scoring[playerId][stat] + delta);
+    save();
+    renderScoring();
+  }
+
+  function renderScoring(){
+    const content = document.getElementById('scoringContent');
+    const active = state.roster.filter(p=>!p.out);
+
+    if(state.roster.length===0){
+      content.innerHTML = `<div class="card"><div class="empty-state"><div class="display">No players yet</div>Add players on the Roster tab, then track goals and assists here.</div></div>`;
+      return;
+    }
+    if(active.length===0){
+      content.innerHTML = `<div class="card"><div class="empty-state"><div class="display">Everyone's out today</div>No available players to track.</div></div>`;
+      return;
+    }
+
+    let html = `<div class="card">`;
+    active.forEach(p=>{
+      const stat = statOf(p.id);
+      html += `
+        <div class="score-row">
+          <div class="score-top">
+            <div class="jersey">${p.number}</div>
+            <div class="score-name">${escapeHtml(p.name)}</div>
+          </div>
+          <div class="score-stats">
+            <div class="score-stat">
+              <span class="score-stat-label">Goals</span>
+              <div class="score-controls">
+                <button class="score-btn minus" data-id="${p.id}" data-stat="goals" data-delta="-1" title="Remove a goal">–</button>
+                <span class="score-count mono">${stat.goals}</span>
+                <button class="score-btn plus" data-id="${p.id}" data-stat="goals" data-delta="1">+1</button>
+              </div>
+            </div>
+            <div class="score-stat">
+              <span class="score-stat-label">Assists</span>
+              <div class="score-controls">
+                <button class="score-btn minus" data-id="${p.id}" data-stat="assists" data-delta="-1" title="Remove an assist">–</button>
+                <span class="score-count mono">${stat.assists}</span>
+                <button class="score-btn plus" data-id="${p.id}" data-stat="assists" data-delta="1">+1</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+    content.innerHTML = html;
+
+    content.querySelectorAll('.score-btn').forEach(btn=>{
+      btn.onclick = ()=> bumpStat(btn.dataset.id, btn.dataset.stat, parseInt(btn.dataset.delta));
+    });
   }
 
   function ratingOf(p){ return typeof p.rating==='number' ? p.rating : 3; }
@@ -1102,6 +1244,7 @@
   }
 
   let dragState = null; // {playerId, sourceEl, clone}
+  let pitchFullscreen = false; // persists across re-renders (drag swaps, tab clicks rebuild the pitch card's HTML)
 
   function startDrag(e, el, playerId){
     if(e.button!==undefined && e.button!==0) return; // left click / primary touch only
@@ -1155,6 +1298,36 @@
   document.addEventListener('pointermove', moveDrag, {passive:false});
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
+
+  // Sizes the fullscreen pitch to fit the viewport while preserving its aspect ratio — CSS
+  // aspect-ratio + max-height alone can mismatch on tall narrow phones (width ends up the
+  // binding constraint, not height), so this computes exact pixel dimensions instead.
+  function sizeFullscreenPitch(){
+    if(!pitchFullscreen) return;
+    const wrap = document.querySelector('.pitch-card.fullscreen-pitch .pitch-svg-wrap');
+    if(!wrap) return;
+    const padding = 40; // 20px on each side, matches .pitch-card.fullscreen-pitch padding
+    const availW = window.innerWidth - padding;
+    const availH = window.innerHeight - padding;
+    const ratio = 400 / (560 + 26); // pitch width / (height + bottom pad), from renderPitchSVG
+    let w = availW, h = w / ratio;
+    if(h > availH){ h = availH; w = h * ratio; }
+    wrap.style.width = w + 'px';
+    wrap.style.height = h + 'px';
+  }
+  window.addEventListener('resize', sizeFullscreenPitch);
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='Escape' && pitchFullscreen){
+      pitchFullscreen = false;
+      const pitchCard = document.getElementById('pitchCard');
+      const fsBtn = document.getElementById('fullscreenToggleBtn');
+      if(pitchCard) pitchCard.classList.remove('fullscreen-pitch');
+      document.body.classList.remove('pitch-fullscreen-active');
+      if(fsBtn){ fsBtn.textContent='⛶'; fsBtn.title='Fullscreen'; }
+      const wrap = pitchCard ? pitchCard.querySelector('.pitch-svg-wrap') : null;
+      if(wrap){ wrap.style.width=''; wrap.style.height=''; }
+    }
+  });
 
   function renderGame(){
     const btn = document.getElementById('randomizeBtn');
@@ -1252,41 +1425,84 @@
     if(state.savedLineups.length===0){
       balanceHtml += `<div style="font-size:12.5px;color:var(--ink-soft);">Save at least one lineup to see playing-time balance across the day.</div></div>`;
     } else {
-      const totals = {}; const gkTotals = {}; let maxTotal = 1;
-      rosterInPlay.forEach(p=>{ totals[p.id]=0; gkTotals[p.id]=0; });
+      const totals = {}, gkMin = {}, defMin = {}, midMin = {}, fwdMin = {};
+      rosterInPlay.forEach(p=>{ totals[p.id]=0; gkMin[p.id]=0; defMin[p.id]=0; midMin[p.id]=0; fwdMin[p.id]=0; });
       state.savedLineups.forEach(l=>{
         Object.entries(l.slots).forEach(([slot,id])=>{
           if(totals[id]===undefined) return;
-          totals[id]=(totals[id]||0)+state.periodLength;
-          if(slot==='GK') gkTotals[id]=(gkTotals[id]||0)+state.periodLength;
+          totals[id] += state.periodLength;
+          const grp = SLOT_GROUP[slot];
+          if(grp==='GK') gkMin[id] += state.periodLength;
+          else if(grp==='DEF') defMin[id] += state.periodLength;
+          else if(grp==='MID') midMin[id] += state.periodLength;
+          else if(grp==='FWD') fwdMin[id] += state.periodLength;
         });
       });
-      Object.values(totals).forEach(v=>{ if(v>maxTotal) maxTotal=v; });
+      const totalGameMinutes = state.savedLineups.length * state.periodLength;
 
       rosterInPlay.slice().sort((a,b)=> totals[b.id]-totals[a.id]).forEach(p=>{
-        const total = totals[p.id]||0;
-        const gk = gkTotals[p.id]||0;
-        const pct = Math.round((total/maxTotal)*100);
-        const gkPct = total>0 ? Math.round((gk/total)*100) : 0;
+        const played = totals[p.id]||0;
+        const bench = Math.max(0, totalGameMinutes - played);
+        const segs = [
+          {min: gkMin[p.id]||0, cls:'seg-gk'},
+          {min: defMin[p.id]||0, cls:'seg-def'},
+          {min: midMin[p.id]||0, cls:'seg-mid'},
+          {min: fwdMin[p.id]||0, cls:'seg-fwd'},
+          {min: bench, cls:'seg-bench'}
+        ];
+        const segHtml = segs.map(s=>{
+          const pct = totalGameMinutes>0 ? (s.min/totalGameMinutes)*100 : 0;
+          return pct>0 ? `<div class="balance-seg ${s.cls}" style="width:${pct}%;"></div>` : '';
+        }).join('');
         balanceHtml += `
           <div class="balance-row">
             <div class="name">${escapeHtml(p.name)}</div>
-            <div class="balance-bar-track"><div class="balance-bar-fill gk-mix" style="width:${pct}%; --gkpct:${gkPct}%;"></div></div>
-            <div class="balance-min mono">${total}m</div>
+            <div class="balance-bar-track balance-stacked">${segHtml}</div>
+            <div class="balance-min mono">${played}m</div>
           </div>`;
       });
-      balanceHtml += `<div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Dark green segment = minutes played at GK</div></div>`;
+      balanceHtml += `
+        <div class="balance-legend">
+          <span><i class="lg-dot lg-gk"></i>GK</span>
+          <span><i class="lg-dot lg-def"></i>D</span>
+          <span><i class="lg-dot lg-mid"></i>M</span>
+          <span><i class="lg-dot lg-fwd"></i>F</span>
+          <span><i class="lg-dot lg-bench"></i>Sitting out</span>
+        </div>
+      </div>`;
     }
 
     content.innerHTML = `
       ${tabsHtml}
       ${saveHtml}
-      <div class="pitch-card">${svg}</div>
+      <div class="pitch-card" id="pitchCard">
+        <button class="fullscreen-toggle" id="fullscreenToggleBtn" title="Fullscreen" aria-label="Toggle fullscreen field view">⛶</button>
+        ${svg}
+      </div>
       <div class="drag-hint">Drag a player to swap positions, or sub with the bench</div>
       <div class="card">${benchHtml}</div>
       ${ratingsHtml}
       ${balanceHtml}
     `;
+
+    const pitchCard = document.getElementById('pitchCard');
+    const fsBtn = document.getElementById('fullscreenToggleBtn');
+    function applyFullscreenState(){
+      pitchCard.classList.toggle('fullscreen-pitch', pitchFullscreen);
+      document.body.classList.toggle('pitch-fullscreen-active', pitchFullscreen);
+      fsBtn.textContent = pitchFullscreen ? '✕' : '⛶';
+      fsBtn.title = pitchFullscreen ? 'Exit fullscreen' : 'Fullscreen';
+      const wrap = pitchCard.querySelector('.pitch-svg-wrap');
+      if(wrap){
+        if(pitchFullscreen) sizeFullscreenPitch();
+        else{ wrap.style.width=''; wrap.style.height=''; }
+      }
+    }
+    applyFullscreenState(); // re-apply after every render — a drag swap or tab click rebuilds this HTML
+    fsBtn.onclick = ()=>{
+      pitchFullscreen = !pitchFullscreen;
+      applyFullscreenState();
+    };
 
     content.querySelectorAll('[data-player-id]').forEach(el=>{
       el.addEventListener('pointerdown', (e)=> startDrag(e, el, el.dataset.playerId));
@@ -1454,6 +1670,14 @@
     renderRoster();
     if(state.workingLineup || state.savedLineups.length>0) renderGame();
     save();
+  };
+  document.getElementById('resetScoringBtn').onclick = ()=>{
+    if(Object.keys(state.scoring).length===0){ flashStatus('Nothing to reset yet.'); return; }
+    if(!confirm('Reset goals and assists for everyone? This can\'t be undone.')) return;
+    state.scoring = {};
+    save();
+    renderScoring();
+    flashStatus('Tallies reset ✓');
   };
 
   // Info tooltips: hover/focus already show them via CSS (desktop); this handles tap-to-toggle
