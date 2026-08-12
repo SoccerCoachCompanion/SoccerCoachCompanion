@@ -43,7 +43,7 @@
   .display{font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em;}
   .mono{font-family:'IBM Plex Mono',monospace;}
 
-  .wrap{max-width:720px; margin:0 auto; padding:20px 16px 140px;}
+  .wrap{max-width:720px; margin:0 auto; padding:20px 16px 40px;}
 
   header.top{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; padding-top:4px;}
   .eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:var(--ink-soft); font-weight:600;}
@@ -199,13 +199,14 @@
   /* Game day */
   .period-tabs{display:flex; gap:6px; overflow-x:auto; margin-bottom:14px; padding-bottom:2px;}
   .period-tabs button{
-    flex-shrink:0; border:1.5px solid var(--line); background:var(--card); padding:8px 14px; border-radius:20px;
+    flex-shrink:0; border:1.5px solid var(--line); background:var(--card); padding:8px 16px; border-radius:20px;
     font-family:'IBM Plex Mono'; font-weight:600; font-size:13px; color:var(--ink-soft); cursor:pointer;
-    display:flex; align-items:center; gap:6px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:98px;
   }
   .period-tabs button.active{background:var(--pitch); border-color:var(--pitch-deep); color:#fff;}
-  .tab-x{font-family:'Inter',sans-serif; font-size:11px; opacity:0.6;}
+  .tab-x{font-family:'Inter',sans-serif; font-size:11px; opacity:0.6; display:inline-flex; align-items:center; gap:1px;}
   .tab-x:hover{opacity:1;}
+  .tab-x-paren{font-family:'IBM Plex Mono',monospace; font-weight:400; font-size:14px;}
 
   .save-btn-row{display:flex; gap:8px; flex-wrap:wrap;}
   .custom-save-row{display:flex; gap:8px; margin-top:10px;}
@@ -269,9 +270,8 @@
   footer.note a{color:var(--pitch); font-weight:700; text-decoration:underline; text-underline-offset:2px;}
   footer.note a:hover{color:var(--pitch-deep);}
 
-  .save-bar{position:fixed; left:0; bottom:0; width:100%; background:var(--card); border-top:1.5px solid var(--line); padding:10px 0; z-index:50; box-shadow:0 -2px 10px rgba(0,0,0,0.06);}
-  .save-bar-inner{max-width:720px; margin:0 auto; padding:0 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
-  .save-status{font-size:11.5px; color:var(--ink-soft); flex:1; text-align:right; min-width:120px;}
+  .save-bar-inner{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .save-status{font-size:11.5px; color:var(--ink-soft); margin-top:8px; min-height:14px;}
 
   .bottom-sheet-backdrop{position:fixed; inset:0; background:rgba(22,36,27,0.4); z-index:90; display:none;}
   .bottom-sheet{
@@ -298,6 +298,18 @@
   .save-tile .save-tile-name{font-family:'Inter',sans-serif; font-size:15px; font-weight:600; color:var(--ink);}
   .save-tile .save-tile-x{font-size:17px; color:var(--ink-soft); padding:2px 8px; cursor:pointer; flex-shrink:0;}
   .save-tile .save-tile-x:hover{color:var(--coral);}
+
+  .score-summary-row{display:flex; gap:10px;}
+  .stat-tile{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    border:2px solid var(--ink); border-radius:16px; padding:14px 8px; background:#fff; cursor:pointer;
+    font-family:'Inter',sans-serif; transition:background .1s; min-height:78px;
+  }
+  button.stat-tile:active{background:#EFEBDD;}
+  div.stat-tile{cursor:default;}
+  .stat-tile-label{font-size:11.5px; font-weight:700; color:var(--ink-soft); text-align:center;}
+  .stat-tile-value{font-size:24px; font-weight:700; color:var(--ink); font-family:'IBM Plex Mono'; white-space:nowrap;}
+  .stat-tile-title{font-size:17px; font-weight:700; color:var(--ink); font-family:'Inter',sans-serif;}
 
   [data-player-id]{cursor:grab; touch-action:none;}
   .token-dragging{opacity:0.25;}
@@ -385,6 +397,17 @@
         <a href="https://ko-fi.com/reclineupbuilder" target="_blank" rel="noopener" id="donateLink" class="btn btn-gold btn-small" style="display:inline-block; text-decoration:none;">☕ Buy me a coffee</a>
       </div>
     </footer>
+
+    <div class="card" style="margin-top:28px;">
+      <button class="btn btn-primary" id="manualSaveBtn" style="width:100%;">💾 Save</button>
+      <div class="save-bar-inner" style="justify-content:center; margin-top:10px;">
+        <button class="btn btn-ghost btn-small" id="manualLoadBtn">📂 Load</button>
+        <button class="btn btn-ghost btn-small" id="exportRosterBtn" title="Export roster to a file">⬆️ Export</button>
+        <button class="btn btn-ghost btn-small" id="importRosterBtn" title="Import roster from a file">⬇️ Import</button>
+        <input type="file" id="importRosterFileInput" accept="application/json" style="display:none;">
+      </div>
+      <div class="save-status" id="saveStatus"></div>
+    </div>
   </div>
 
   <!-- GAME DAY TAB -->
@@ -407,24 +430,25 @@
   <div id="tabScoring" style="display:none;">
 
     <div class="card" style="padding-bottom:14px;">
-      <button class="btn btn-ghost" id="resetScoringBtn" style="width:100%;">Reset</button>
+      <div class="score-summary-row">
+        <button class="stat-tile" id="opponentGoalBtn">
+          <span class="stat-tile-label">Opponent Goal</span>
+          <span class="stat-tile-value">+1</span>
+        </button>
+        <div class="stat-tile">
+          <span class="stat-tile-label">Score</span>
+          <span class="stat-tile-value" id="scoreDisplay">0 - 0</span>
+        </div>
+        <button class="stat-tile" id="resetScoringBtn">
+          <span class="stat-tile-title">Reset</span>
+        </button>
+      </div>
     </div>
 
     <div id="scoringContent"></div>
 
   </div>
 
-</div>
-
-<div class="save-bar">
-  <div class="save-bar-inner">
-    <button class="btn btn-primary btn-small" id="manualSaveBtn">💾 Save</button>
-    <button class="btn btn-ghost btn-small" id="manualLoadBtn">📂 Load</button>
-    <button class="btn btn-ghost btn-small" id="exportRosterBtn" title="Export roster to a file">⬆️ Export</button>
-    <button class="btn btn-ghost btn-small" id="importRosterBtn" title="Import roster from a file">⬇️ Import</button>
-    <input type="file" id="importRosterFileInput" accept="application/json" style="display:none;">
-    <span class="save-status" id="saveStatus"></span>
-  </div>
 </div>
 
 <div class="bottom-sheet-backdrop" id="sheetBackdrop"></div>
@@ -575,7 +599,7 @@
     return {
       format:'7v7', formation: defaultFormationFor('7v7'), numPeriods:4, periodLength:12,
       roster:[], workingLineup:null, savedLineups:[], activeView:null, avoidRepeatGK:false,
-      ratingsEnabled:false, scoring:{}
+      ratingsEnabled:false, scoring:{}, opponentGoals:0
     };
   }
 
@@ -742,6 +766,7 @@
     }
     if(!state.savedLineups) state.savedLineups = [];
     if(!state.scoring || typeof state.scoring!=='object') state.scoring = {};
+    if(typeof state.opponentGoals!=='number' || state.opponentGoals<0) state.opponentGoals = 0;
     if(state.workingLineup===undefined) state.workingLineup = null;
     delete state.lineups;
     delete state.activePeriod;
@@ -1056,7 +1081,16 @@
     renderScoring();
   }
 
+  function ourGoalsTotal(){
+    return Object.values(state.scoring).reduce((sum, s)=> sum + (s.goals||0), 0);
+  }
+  function updateScoreDisplay(){
+    const el = document.getElementById('scoreDisplay');
+    if(el) el.textContent = `${ourGoalsTotal()} - ${state.opponentGoals}`;
+  }
+
   function renderScoring(){
+    updateScoreDisplay();
     const content = document.getElementById('scoringContent');
     const active = state.roster.filter(p=>!p.out);
 
@@ -1349,7 +1383,7 @@
       tabsHtml += `<button data-view="working" class="${state.activeView==='working'?'active':''}">New*</button>`;
     }
     state.savedLineups.forEach(l=>{
-      tabsHtml += `<button data-view="${l.id}" class="${state.activeView===l.id?'active':''}">${escapeHtml(l.label)} <span class="tab-x" data-del="${l.id}" title="Delete">✕</span></button>`;
+      tabsHtml += `<button data-view="${l.id}" class="${state.activeView===l.id?'active':''}">${escapeHtml(l.label)} <span class="tab-x" data-del="${l.id}" title="Delete"><span class="tab-x-paren">(</span>&nbsp;✕&nbsp;<span class="tab-x-paren">)</span></span></button>`;
     });
     tabsHtml += `</div>`;
 
@@ -1672,12 +1706,18 @@
     save();
   };
   document.getElementById('resetScoringBtn').onclick = ()=>{
-    if(Object.keys(state.scoring).length===0){ flashStatus('Nothing to reset yet.'); return; }
-    if(!confirm('Reset goals and assists for everyone? This can\'t be undone.')) return;
+    if(Object.keys(state.scoring).length===0 && state.opponentGoals===0){ flashStatus('Nothing to reset yet.'); return; }
+    if(!confirm('Reset the score, goals, and assists for everyone? This can\'t be undone.')) return;
     state.scoring = {};
+    state.opponentGoals = 0;
     save();
     renderScoring();
-    flashStatus('Tallies reset ✓');
+    flashStatus('Reset ✓');
+  };
+  document.getElementById('opponentGoalBtn').onclick = ()=>{
+    state.opponentGoals += 1;
+    save();
+    updateScoreDisplay();
   };
 
   // Info tooltips: hover/focus already show them via CSS (desktop); this handles tap-to-toggle
