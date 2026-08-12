@@ -164,6 +164,7 @@
   .score-btn.plus:active{background:var(--gold-deep);}
   .score-btn.minus{background:#fff; color:var(--ink-soft); border:1.5px solid var(--line);}
   .score-btn.minus:active{background:var(--line);}
+  .score-season{font-size:10px; font-weight:600; color:var(--ink-soft); margin-top:2px;}
 
   button.btn{
     border:none; border-radius:11px; padding:12px 16px; font-weight:700; font-size:14px; cursor:pointer;
@@ -455,6 +456,11 @@
 
     <div id="scoringContent"></div>
 
+    <div class="card">
+      <button class="btn btn-primary" id="saveGameStatsBtn" style="width:100%; margin-bottom:10px;">Save Game Stats</button>
+      <button class="btn btn-ghost" id="clearSeasonStatsBtn" style="width:100%;">Clear Season Stats</button>
+    </div>
+
   </div>
 
 </div>
@@ -607,7 +613,7 @@
     return {
       format:'7v7', formation: defaultFormationFor('7v7'), numPeriods:4, periodLength:12,
       roster:[], workingLineup:null, savedLineups:[], activeView:null, avoidRepeatGK:false,
-      ratingsEnabled:false, scoring:{}, opponentGoals:0
+      ratingsEnabled:false, scoring:{}, opponentGoals:0, seasonStats:{}
     };
   }
 
@@ -775,6 +781,7 @@
     if(!state.savedLineups) state.savedLineups = [];
     if(!state.scoring || typeof state.scoring!=='object') state.scoring = {};
     if(typeof state.opponentGoals!=='number' || state.opponentGoals<0) state.opponentGoals = 0;
+    if(!state.seasonStats || typeof state.seasonStats!=='object') state.seasonStats = {};
     if(state.workingLineup===undefined) state.workingLineup = null;
     delete state.lineups;
     delete state.activePeriod;
@@ -1082,6 +1089,9 @@
   function statOf(playerId){
     return state.scoring[playerId] || {goals:0, assists:0};
   }
+  function seasonStatOf(playerId){
+    return state.seasonStats[playerId] || {goals:0, assists:0};
+  }
   function bumpStat(playerId, stat, delta){
     if(!state.scoring[playerId]) state.scoring[playerId] = {goals:0, assists:0};
     state.scoring[playerId][stat] = Math.min(99, Math.max(0, state.scoring[playerId][stat] + delta));
@@ -1114,6 +1124,7 @@
     let html = `<div class="card">`;
     active.forEach(p=>{
       const stat = statOf(p.id);
+      const season = seasonStatOf(p.id);
       html += `
         <div class="score-row">
           <div class="score-top">
@@ -1128,6 +1139,7 @@
                 <span class="score-count mono">${stat.goals}</span>
                 <button class="score-btn plus" data-id="${p.id}" data-stat="goals" data-delta="1">+1</button>
               </div>
+              <span class="score-season">Season: ${season.goals}</span>
             </div>
             <div class="score-stat">
               <span class="score-stat-label">Assists</span>
@@ -1136,6 +1148,7 @@
                 <span class="score-count mono">${stat.assists}</span>
                 <button class="score-btn plus" data-id="${p.id}" data-stat="assists" data-delta="1">+1</button>
               </div>
+              <span class="score-season">Season: ${season.assists}</span>
             </div>
           </div>
         </div>`;
@@ -1726,6 +1739,28 @@
     state.opponentGoals = Math.min(99, state.opponentGoals + 1);
     save();
     updateScoreDisplay();
+  };
+  document.getElementById('saveGameStatsBtn').onclick = ()=>{
+    if(Object.keys(state.scoring).length===0){ flashStatus('Nothing to save yet.'); return; }
+    if(!confirm('Add this game\'s goals and assists to season totals, then start a fresh game?')) return;
+    Object.entries(state.scoring).forEach(([playerId, gameStat])=>{
+      if(!state.seasonStats[playerId]) state.seasonStats[playerId] = {goals:0, assists:0};
+      state.seasonStats[playerId].goals = Math.min(999, state.seasonStats[playerId].goals + (gameStat.goals||0));
+      state.seasonStats[playerId].assists = Math.min(999, state.seasonStats[playerId].assists + (gameStat.assists||0));
+    });
+    state.scoring = {};
+    state.opponentGoals = 0;
+    save();
+    renderScoring();
+    flashStatus('Game stats saved to season ✓');
+  };
+  document.getElementById('clearSeasonStatsBtn').onclick = ()=>{
+    if(Object.keys(state.seasonStats).length===0){ flashStatus('No season stats yet.'); return; }
+    if(!confirm('Clear season goals and assists for everyone? This can\'t be undone.')) return;
+    state.seasonStats = {};
+    save();
+    renderScoring();
+    flashStatus('Season stats cleared ✓');
   };
 
   // Info tooltips: hover/focus already show them via CSS (desktop); this handles tap-to-toggle
