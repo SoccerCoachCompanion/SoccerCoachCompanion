@@ -425,6 +425,10 @@
     <div class="card" style="padding-bottom:14px;">
       <button class="btn btn-primary" id="randomizeBtn">🔀 Create a Lineup</button>
       <label class="checkbox-row">
+        <input type="checkbox" id="prioritizeEvenTimeInput">
+        <span>Prioritize even playing time over position preferences</span>
+      </label>
+      <label class="checkbox-row">
         <input type="checkbox" id="avoidRepeatGkInput">
         <span>Avoid repeat GK (Q1–Q4, when possible)</span>
       </label>
@@ -476,11 +480,11 @@
   const STORAGE_KEY = 'lineup-app-state-v3';
 
   // Which eligibility chip(s) a given pitch slot draws from, in priority order.
-  // A slot first looks for a specialist, then falls back to the adjacent chip, then anyone.
+  // A slot works through its chips in order, then falls back to anyone if none are available.
   const SLOT_ELIG_CHAIN = {
-    CD: ['CD','OD'], LCD: ['CD','OD'], RCD: ['CD','OD'], LD: ['OD','CD'], RD: ['OD','CD'],
-    CM: ['CM','OM'], LCM: ['CM','OM'], RCM: ['CM','OM'], LM: ['OM','CM'], RM: ['OM','CM'],
-    ST: ['FWD'], LF: ['FWD'], RF: ['FWD'], CF: ['FWD']
+    CD: ['CD','CM'], LCD: ['CD','OD'], RCD: ['CD','OD'], LD: ['OD','OM','FWD'], RD: ['OD','OM','FWD'],
+    CM: ['CM','CD'], LCM: ['CM','CD'], RCM: ['CM','CD'], LM: ['OM','FWD','OD'], RM: ['OM','FWD','OD'],
+    ST: ['FWD','OM'], LF: ['FWD','OM'], RF: ['FWD','OM'], CF: ['FWD','OM']
   };
 
   // Formation-independent slot → broad group, so a lineup saved under a different formation
@@ -613,7 +617,7 @@
     return {
       format:'7v7', formation: defaultFormationFor('7v7'), numPeriods:4, periodLength:12,
       roster:[], workingLineup:null, savedLineups:[], activeView:null, avoidRepeatGK:false,
-      ratingsEnabled:false, scoring:{}, opponentGoals:0, seasonStats:{}
+      ratingsEnabled:false, scoring:{}, opponentGoals:0, seasonStats:{}, prioritizeEvenTime:true
     };
   }
 
@@ -782,6 +786,7 @@
     if(!state.scoring || typeof state.scoring!=='object') state.scoring = {};
     if(typeof state.opponentGoals!=='number' || state.opponentGoals<0) state.opponentGoals = 0;
     if(!state.seasonStats || typeof state.seasonStats!=='object') state.seasonStats = {};
+    if(typeof state.prioritizeEvenTime!=='boolean') state.prioritizeEvenTime = true;
     if(state.workingLineup===undefined) state.workingLineup = null;
     delete state.lineups;
     delete state.activePeriod;
@@ -1205,31 +1210,69 @@
     const slots = {};
 
     // Goalkeeper
-    let gkCandidates = pool.filter(p=>p.elig.GK && !assigned.has(p.id));
-    if(gkCandidates.length===0) gkCandidates = pool.filter(p=>!assigned.has(p.id));
+    let gkCandidates;
+    if(state.prioritizeEvenTime){
+      // Even time wins ties over the GK chip: consider everyone, use eligibility only as a tiebreaker.
+      gkCandidates = pool.filter(p=>!assigned.has(p.id));
+    } else {
+      gkCandidates = pool.filter(p=>p.elig.GK && !assigned.has(p.id));
+      if(gkCandidates.length===0) gkCandidates = pool.filter(p=>!assigned.has(p.id));
+    }
     if(state.avoidRepeatGK){
       // Prefer anyone who hasn't already played GK in Q1-Q4 today, when that's possible.
       const freshCandidates = gkCandidates.filter(p=>!priorGKs.has(p.id));
       if(freshCandidates.length>0) gkCandidates = freshCandidates;
     }
-    gkCandidates.sort((a,b)=> gkMinutes[a.id]-gkMinutes[b.id]);
+    gkCandidates.sort((a,b)=>{
+      const diff = gkMinutes[a.id]-gkMinutes[b.id];
+      if(diff!==0) return diff;
+      if(state.prioritizeEvenTime){
+        const aElig = a.elig.GK ? 0 : 1;
+        const bElig = b.elig.GK ? 0 : 1;
+        if(aElig!==bElig) return aElig-bElig;
+      }
+      return 0;
+    });
     const gk = gkCandidates[0];
     if(gk){ slots.GK = gk.id; assigned.add(gk.id); }
 
-    // Outfield slots: fill in random order so no single slot always gets first pick.
-    // Each slot tries its specialist chip first (e.g. CD), then its fallback chip (e.g. OD), then anyone left.
-    const outfieldSlots = shuffle([...pos.DEF, ...pos.MID, ...pos.FWD]);
+    // Outfield slots fill in a fixed priority: center mids first, then center backs, then
+    // everything else in random order (so no single remaining slot always gets first pick).
+    // When prioritizeEvenTime is on, every slot considers the whole remaining pool and picks by
+    // lowest minutes first, using the slot's eligibility chip only as a tiebreaker. When off,
+    // each slot tries its specialist chip first (e.g. CD), then its fallback chip (e.g. OD), then
+    // anyone left — eligibility is a hard filter and minutes only break ties within it.
+    const CM_FAMILY = new Set(['CM','LCM','RCM']);
+    const CD_FAMILY = new Set(['CD','LCD','RCD']);
+    const allOutfield = [...pos.DEF, ...pos.MID, ...pos.FWD];
+    const cmSlots = shuffle(allOutfield.filter(s=>CM_FAMILY.has(s)));
+    const cdSlots = shuffle(allOutfield.filter(s=>CD_FAMILY.has(s)));
+    const restSlots = shuffle(allOutfield.filter(s=>!CM_FAMILY.has(s) && !CD_FAMILY.has(s)));
+    const outfieldSlots = [...cmSlots, ...cdSlots, ...restSlots];
     outfieldSlots.forEach(slot=>{
       const chain = SLOT_ELIG_CHAIN[slot] || [];
-      let candidates = [];
-      for(const key of chain){
-        candidates = pool.filter(p=>!assigned.has(p.id) && p.elig[key]);
-        if(candidates.length>0) break;
+      let candidates;
+      if(state.prioritizeEvenTime){
+        candidates = pool.filter(p=>!assigned.has(p.id));
+      } else {
+        candidates = [];
+        for(const key of chain){
+          candidates = pool.filter(p=>!assigned.has(p.id) && p.elig[key]);
+          if(candidates.length>0) break;
+        }
+        if(candidates.length===0) candidates = pool.filter(p=>!assigned.has(p.id));
       }
-      if(candidates.length===0) candidates = pool.filter(p=>!assigned.has(p.id));
       if(candidates.length===0) return;
-      // Least total time played gets priority; if tied, whoever's sat more quarters on the bench goes next.
-      candidates.sort((a,b)=> (minutes[a.id]-minutes[b.id]) || (benchCount[b.id]-benchCount[a.id]));
+      candidates.sort((a,b)=>{
+        const diff = minutes[a.id]-minutes[b.id];
+        if(diff!==0) return diff;
+        if(state.prioritizeEvenTime){
+          const aElig = chain.some(key=>a.elig[key]) ? 0 : 1;
+          const bElig = chain.some(key=>b.elig[key]) ? 0 : 1;
+          if(aElig!==bElig) return aElig-bElig;
+        }
+        return benchCount[b.id]-benchCount[a.id];
+      });
       const chosen = candidates[0];
       slots[slot] = chosen.id;
       assigned.add(chosen.id);
@@ -1389,6 +1432,7 @@
     btn.disabled = state.roster.filter(p=>!p.out).length < fieldSize();
     btn.textContent = state.workingLineup ? '🔀 Create Another Lineup' : '🔀 Create a Lineup';
     document.getElementById('avoidRepeatGkInput').checked = !!state.avoidRepeatGK;
+    document.getElementById('prioritizeEvenTimeInput').checked = !!state.prioritizeEvenTime;
 
     const content = document.getElementById('gameContent');
     const lu = currentLineup();
@@ -1718,6 +1762,10 @@
   document.getElementById('sheetBackdrop').onclick = closeSheet;
   document.getElementById('avoidRepeatGkInput').onchange = (e)=>{
     state.avoidRepeatGK = e.target.checked;
+    save();
+  };
+  document.getElementById('prioritizeEvenTimeInput').onchange = (e)=>{
+    state.prioritizeEvenTime = e.target.checked;
     save();
   };
   document.getElementById('ratingsEnabledInput').onchange = (e)=>{
