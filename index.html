@@ -181,7 +181,7 @@
   .info-tip-bubble{
     visibility:hidden; opacity:0; position:absolute; bottom:135%; left:50%; transform:translateX(-50%);
     background:var(--ink); color:#fff; font-size:11.5px; font-weight:500; font-style:normal; line-height:1.4;
-    padding:8px 10px; border-radius:9px; width:180px; text-align:left; pointer-events:none; z-index:30;
+    padding:8px 10px; border-radius:9px; width:220px; max-width:calc(100vw - 48px); text-align:left; pointer-events:none; z-index:30;
     transition:opacity .15s;
   }
   .info-tip-bubble::after{content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--ink);}
@@ -424,10 +424,16 @@
 
     <div class="card" style="padding-bottom:14px;">
       <button class="btn btn-primary" id="randomizeBtn">🔀 Create a Lineup</button>
-      <label class="checkbox-row">
-        <input type="checkbox" id="prioritizeEvenTimeInput">
-        <span>Prioritize even playing time over position preferences</span>
-      </label>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <label class="checkbox-row" style="margin:0;">
+          <input type="checkbox" id="prioritizeEvenTimeInput">
+          <span>Prioritize even playing time over position preferences</span>
+        </label>
+        <span class="info-tip" tabindex="0" role="button" aria-label="When should I check this?">
+          <span class="info-tip-icon">i</span>
+          <span class="info-tip-bubble">Start with this unchecked. If you're having problems with uneven playing time, ensure enough players are assigned to each position. Checking this leads to more out-of-position CM, CD, etc.</span>
+        </span>
+      </div>
       <label class="checkbox-row">
         <input type="checkbox" id="avoidRepeatGkInput">
         <span>Avoid repeat GK (Q1–Q4, when possible)</span>
@@ -616,8 +622,8 @@
   function defaultState(){
     return {
       format:'7v7', formation: defaultFormationFor('7v7'), numPeriods:4, periodLength:12,
-      roster:[], workingLineup:null, savedLineups:[], activeView:null, avoidRepeatGK:false,
-      ratingsEnabled:false, scoring:{}, opponentGoals:0, seasonStats:{}, prioritizeEvenTime:true
+      roster:[], workingLineup:null, savedLineups:[], activeView:null, avoidRepeatGK:true,
+      ratingsEnabled:false, scoring:{}, opponentGoals:0, seasonStats:{}, prioritizeEvenTime:false
     };
   }
 
@@ -786,7 +792,7 @@
     if(!state.scoring || typeof state.scoring!=='object') state.scoring = {};
     if(typeof state.opponentGoals!=='number' || state.opponentGoals<0) state.opponentGoals = 0;
     if(!state.seasonStats || typeof state.seasonStats!=='object') state.seasonStats = {};
-    if(typeof state.prioritizeEvenTime!=='boolean') state.prioritizeEvenTime = true;
+    if(typeof state.prioritizeEvenTime!=='boolean') state.prioritizeEvenTime = false;
     if(state.workingLineup===undefined) state.workingLineup = null;
     delete state.lineups;
     delete state.activePeriod;
