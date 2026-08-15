@@ -32,6 +32,7 @@
     --radius:16px;
   }
   *{box-sizing:border-box;}
+  html{overflow-x:hidden;}
   body{
     margin:0;
     background:var(--bg);
@@ -39,6 +40,7 @@
     font-family:'Inter',sans-serif;
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
+    width:100%;
   }
   body.drag-in-progress{touch-action:none; overscroll-behavior:none;}
   .display{font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em;}
@@ -46,7 +48,11 @@
 
   .wrap{max-width:720px; margin:0 auto; padding:20px 16px 40px;}
 
-  header.top{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; row-gap:8px; margin-bottom:18px; padding-top:4px;}
+  header.top{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; padding-top:4px;}
+  @media (max-width: 480px){
+    header.top{flex-direction:column; align-items:stretch;}
+    header.top > div{width:100%;}
+  }
   .eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:var(--ink-soft); font-weight:600;}
   h1.brand{font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:0.005em; font-size:26px; margin:2px 0 0; line-height:1.05;}
   .format-pill{font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--ink); color:var(--bg); padding:6px 10px; border-radius:20px; font-weight:600; white-space:nowrap;}
@@ -175,7 +181,8 @@
   .btn-primary{background:var(--pitch); color:#fff; width:100%;}
   .btn-primary:disabled{opacity:0.4; cursor:not-allowed;}
 
-  .checkbox-row{display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color:var(--ink-soft); font-weight:600; cursor:pointer;}
+  .checkbox-row{display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color:var(--ink-soft); font-weight:600; cursor:pointer; min-width:0;}
+  .checkbox-row span{min-width:0;}
 
   .info-tip{position:relative; display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; border-radius:50%; background:var(--ink-soft); color:#fff; font-size:11px; font-weight:700; font-family:'Inter',sans-serif; font-style:italic; cursor:pointer; flex-shrink:0; user-select:none;}
   .info-tip:hover, .info-tip:focus, .info-tip.show{background:var(--pitch); outline:none;}
