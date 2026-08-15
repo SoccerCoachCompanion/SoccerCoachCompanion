@@ -48,15 +48,12 @@
 
   .wrap{max-width:720px; margin:0 auto; padding:20px 16px 40px;}
 
-  header.top{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; padding-top:4px;}
+  header.top{display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:18px; padding-top:4px;}
+  .header-row{display:flex; align-items:center; justify-content:space-between; width:100%; gap:10px;}
   @media (max-width: 480px){
-    header.top{flex-direction:column; align-items:stretch;}
-    header.top > div{width:100%;}
-    .eyebrow{font-size:9.5px; letter-spacing:0.09em;}
     h1.brand{font-size:21px;}
   }
-  .eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:var(--ink-soft); font-weight:600;}
-  h1.brand{font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:0.005em; font-size:26px; margin:2px 0 0; line-height:1.05;}
+  h1.brand{font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:0.005em; font-size:26px; margin:0; line-height:1.05; text-align:center;}
   .format-pill{font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--ink); color:var(--bg); padding:6px 10px; border-radius:20px; font-weight:600; white-space:nowrap;}
 
   nav.tabs{display:flex; gap:6px; margin-bottom:18px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px;}
@@ -347,11 +344,8 @@
 <div class="wrap">
 
   <header class="top">
-    <div style="min-width:0;">
-      <div class="eyebrow">Soccer Lineup Builder</div>
-      <h1 class="brand">Soccer Coach Companion</h1>
-    </div>
-    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:0;">
+    <h1 class="brand">Soccer Coach Companion</h1>
+    <div class="header-row">
       <div class="format-pill" id="formatPill">7v7</div>
       <a href="https://ko-fi.com/reclineupbuilder" target="_blank" rel="noopener" id="donateLink" class="btn btn-gold btn-small" style="display:inline-block; text-decoration:none;">☕ Buy me a coffee</a>
     </div>
